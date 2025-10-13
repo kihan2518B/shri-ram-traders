@@ -28,7 +28,7 @@ export async function GET(req: Request, context: any) {
     });
     return NextResponse.json({ message: "success", invoice }, { status: 200 });
   } catch (error) {
-    console.log("Error while getting invoice @/api/bills/[id]", error);
+    console.log("Error while getting invoice @/api/invoices/[id]", error);
     return NextResponse.json(
       { message: "Error while getting invoice" },
       { status: 500 }
@@ -76,7 +76,11 @@ export async function PATCH(req: Request, context: any) {
         );
       }
       // If payment amount is provided in the request
-      if (data.amount && data.amount > currentInvoice.grandTotal) {
+      if (
+        data.amount &&
+        data.amount >
+          currentInvoice.grandTotal + (Number(currentInvoice?.uplak) || 0)
+      ) {
         return NextResponse.json(
           { message: "Payment amount cannot be greater than invoice amount" },
           { status: 400 }
@@ -107,7 +111,6 @@ export async function PATCH(req: Request, context: any) {
         { status: 200 }
       );
     }
-    console.log("updating Invoice", data);
     //update invoice
     const invoice = await prisma.invoice.update({
       where: {
@@ -128,9 +131,41 @@ export async function PATCH(req: Request, context: any) {
       { status: 200 }
     );
   } catch (error) {
-    console.log("Error while updating invoice @/api/bills/[id]", error);
+    console.log("Error while updating invoice @/api/invoices/[id]", error);
     return NextResponse.json(
       { message: "Error while updating invoice" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request, context: any) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const { id } = context.params;
+    if (!id)
+      return NextResponse.json({ message: "No invoice id" }, { status: 400 });
+
+    await prisma.invoice.delete({
+      where: { id: id },
+    });
+
+    return NextResponse.json(
+      { message: "Invoice Deleted Successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.log("Error while deleting invoice @/api/invoices/[id]", error);
+    return NextResponse.json(
+      { message: "Error while deleting invoice" },
       { status: 500 }
     );
   }

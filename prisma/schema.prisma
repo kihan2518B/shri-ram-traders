@@ -84,6 +84,103 @@
 //   updatedAt  DateTime @updatedAt
 // }
 
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// model User {
+//   id           String         @id @default(uuid())
+//   email        String         @unique
+//   createdAt    DateTime       @default(now())
+//   updatedAt    DateTime       @updatedAt
+//   Organization Organization[]
+//   customers    Customer[]
+//   invoices     Invoice[]
+// }
+
+// model Organization {
+//   id            String    @id @default(uuid())
+//   name          String
+//   gstNumber     String    @unique
+//   logo          String?
+//   address       String
+//   bankName      String
+//   accountNumber String
+//   ifscCode      String
+//   policy        String?
+//   userId        String
+//   invoiceCount  Int       @default(0)
+//   fireWoodInvoiceCount Int @default(0)
+//   createdAt     DateTime  @default(now())
+//   updatedAt     DateTime  @updatedAt
+//   invoices      Invoice[]
+//   user          User      @relation(fields: [userId], references: [id])
+// }
+
+// model Customer {
+//   id        String    @id @default(uuid())
+//   name      String
+//   address   String
+//   gstNumber String
+//   invoices  Invoice[]
+//   userId    String
+//   user      User      @relation(fields: [userId], references: [id])
+//   createdAt DateTime  @default(now())
+//   updatedAt DateTime  @updatedAt
+// }
+
+// model Invoice {
+//   id             String       @id @default(uuid())
+//   invoiceNumber  String
+//   organizationId String
+//   userId         String
+//   organization   Organization @relation(fields: [organizationId], references: [id])
+//   customerId     String?
+//   customer       Customer?    @relation(fields: [customerId], references: [id])
+//   billerName     String?
+//   invoiceType    String //Credit or Debit
+//   uplak         String?
+//   items          Json
+//   totalAmount    Float
+//   vehicalNumber  String
+//   gstPercentage  Int @default(18)
+//   gstAmount      Float
+//   grandTotal     Float
+//   status         String       @default("PENDING")
+//   createdAt      DateTime     @default(now())
+//   updatedAt      DateTime     @updatedAt
+//   User           User         @relation(fields: [userId], references: [id])
+//   payments       PaymentLog[]
+// }
+
+// model Expenses {
+//   id          String   @id @default(uuid())
+//   type        String
+//   description String
+//   amount      Int
+//   expenseDate DateTime
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+// }
+
+// model PaymentLog {
+//   id            String   @id @default(uuid())
+//   invoiceId     String
+//   invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+//   amount        String
+//   note          String?
+//   paymentDate   DateTime
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
+//   creditBillsId String?
+// }
+
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -101,25 +198,30 @@ model User {
   Organization Organization[]
   customers    Customer[]
   invoices     Invoice[]
+
+  @@index([email])
 }
 
 model Organization {
-  id            String    @id @default(uuid())
-  name          String
-  gstNumber     String    @unique
-  logo          String?
-  address       String
-  bankName      String
-  accountNumber String
-  ifscCode      String
-  policy        String?
-  userId        String
-  invoiceCount  Int       @default(0)
-  fireWoodInvoiceCount Int @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  invoices      Invoice[]
-  user          User      @relation(fields: [userId], references: [id])
+  id                   String    @id @default(uuid())
+  name                 String
+  gstNumber            String    @unique
+  logo                 String?
+  address              String
+  bankName             String
+  accountNumber        String
+  ifscCode             String
+  policy               String?
+  userId               String
+  invoiceCount         Int       @default(0)
+  fireWoodInvoiceCount Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  invoices             Invoice[]
+  user                 User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([gstNumber])
 }
 
 model Customer {
@@ -132,6 +234,10 @@ model Customer {
   user      User      @relation(fields: [userId], references: [id])
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([gstNumber])
+  @@index([name])
 }
 
 model Invoice {
@@ -139,32 +245,57 @@ model Invoice {
   invoiceNumber  String
   organizationId String
   userId         String
-  organization   Organization @relation(fields: [organizationId], references: [id])
   customerId     String?
-  customer       Customer?    @relation(fields: [customerId], references: [id])
   billerName     String?
-  invoiceType    String //Credit or Debit
+  invoiceType    String
+  uplak          String?
   items          Json
   totalAmount    Float
   vehicalNumber  String
-  gstPercentage  Int @default(18)
+  gstPercentage  Int          @default(18)
   gstAmount      Float
   grandTotal     Float
   status         String       @default("PENDING")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   User           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id],onDelete: Cascade)
+  customer       Customer?    @relation(fields: [customerId], references: [id],onDelete: Cascade)
   payments       PaymentLog[]
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([userId])
+  @@index([invoiceNumber])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Expenses {
+  id          String   @id @default(uuid())
+  type        String
+  description String
+  amount      Int
+  expenseDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([expenseDate])
+  @@index([type])
 }
 
 model PaymentLog {
   id            String   @id @default(uuid())
   invoiceId     String
-  invoice       Invoice  @relation(fields: [invoiceId], references: [id])
   amount        String
   note          String?
   paymentDate   DateTime
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   creditBillsId String?
+
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([paymentDate])
 }

@@ -13,6 +13,7 @@ type inputBody = {
   gstPercentage: number;
   invoiceType: string;
   referenceInvoiceNumber: string;
+  uplak?: string;
 };
 
 type item = {
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     gstAmount,
     grandTotal,
     gstPercentage,
+    uplak,
     vehicalNumber,
     invoiceType,
   } = body;
@@ -76,6 +78,7 @@ export async function POST(request: Request) {
         totalAmount,
         grandTotal,
         gstAmount,
+        uplak,
         vehicalNumber,
         status: "PENDING",
         invoiceType,
@@ -116,7 +119,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
+  const supabase = await createClient();  
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
@@ -140,10 +143,10 @@ export async function GET(request: Request) {
       const invoices = await prisma.invoice.findMany({
         where: {
           userId: data.user?.id,
-          // createdAt: {
-          //   gte: startDate,
-          //   lte: endDate,
-          // },
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
         },
         include: {
           customer: true,
@@ -155,7 +158,6 @@ export async function GET(request: Request) {
         },
       });
 
-      console.log("Invoices fetched:", invoices);
       if (!invoices) throw new Error("Error while getting invoices");
 
       return NextResponse.json(

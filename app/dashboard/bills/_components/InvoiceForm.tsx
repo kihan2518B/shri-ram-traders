@@ -519,7 +519,6 @@ const productsOptions = [
   { label: "Wooden Dust", value: "WoodenDust" },
 ];
 
-
 export default function InvoiceForm({
   user,
   refetch,
@@ -533,6 +532,7 @@ export default function InvoiceForm({
   const [invoiceType, setInvoiceType] = useState<"DEBIT" | "CREDIT">("DEBIT");
   const [gstPercentage, setGstPercentage] = useState(18); // Default GST percentage
   const [referenceInvoiceNumber, setReferenceInvoiceNumber] = useState("");
+  const [uplak, setUplak] = useState<string | null>(null);
   const [items, setItems] = useState([
     { name: "", hsnCode: "", quantity: 0, price: 0, unit: "", amount: 0 },
   ]);
@@ -591,6 +591,7 @@ export default function InvoiceForm({
           totalAmount,
           gstAmount,
           grandTotal,
+          uplak,
           vehicalNumber,
           invoiceType,
           gstPercentage,
@@ -812,6 +813,25 @@ export default function InvoiceForm({
                 ))}
               </select>
               <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-neutral-text pointer-events-none" />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="uplak"
+              className="block text-sm font-medium text-neutral-text mb-1"
+            >
+              Uplak Amount
+            </label>
+            <div className="relative">
+              <input
+                id="uplak"
+                type="text"
+                value={uplak ?? ""}
+                onChange={(e) => setUplak(e.target.value)}
+                placeholder="Enter Uplak Amount "
+                className="w-full p-3 pl-9 rounded-md border border-neutral-border text-neutral-text focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none"
+              />
             </div>
           </div>
 
