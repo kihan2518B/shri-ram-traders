@@ -2,16 +2,15 @@
 import type React from "react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import CustomAdminSideBar from "@/components/CustomAdminSidebar"
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { Toaster } from 'react-hot-toast';
+import { supabase } from "@/utils/supabase";
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const supabase = createClientComponentClient();
     return (
         <div className="w-full">
             <SidebarProvider>

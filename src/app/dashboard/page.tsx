@@ -292,7 +292,7 @@ export default async function Dashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {recentInvoices.map((invoice) => (
+              {recentInvoices.map((invoice:any) => (
                 <tr
                   key={invoice.id}
                   className={`border-t border-neutral-border hover:bg-neutral-light/50 ${
@@ -378,7 +378,7 @@ export default async function Dashboard() {
 
         {/* Mobile: Card View */}
         <div className="sm:hidden space-y-4">
-          {recentInvoices.map((invoice) => (
+          {recentInvoices.map((invoice:any) => (
             <div
               key={invoice.id}
               className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
