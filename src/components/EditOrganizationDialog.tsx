@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Organization } from "@prisma/client";
 import { updateOrganization } from "@/app/actions";
 import { X, Upload, Building, CreditCard, MapPin, Landmark, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Organization } from "../../generated/prisma";
 
 export default function EditOrganizationDialog({
   org,
