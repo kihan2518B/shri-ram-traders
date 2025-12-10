@@ -119,7 +119,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();  
+  const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
@@ -130,6 +130,9 @@ export async function GET(request: Request) {
     const getorgandcustid = searchParams.get("getorgandcust");
     const startDateStr = searchParams.get("startDate");
     const endDateStr = searchParams.get("endDate");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
     if (startDateStr && endDateStr) {
       const startDate = new Date(startDateStr);
@@ -188,14 +191,25 @@ export async function GET(request: Request) {
       );
     }
 
-    const invoices = await prisma.invoice.findMany({
-      where: { userId: data.user?.id },
-      include: { customer: true, organization: true },
-      orderBy: { createdAt: "desc" },
-    });
-    if (!invoices) throw new Error("Error while getting invoices");
+    const [invoices, total] = await Promise.all([
+      prisma.invoice.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: { customer: true, organization: true, payments: true },
+      }),
+      prisma.invoice.count(),
+    ]);
 
-    return NextResponse.json({ message: "success", invoices }, { status: 200 });
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      invoices,
+      page,
+      totalPages,
+      total,
+      nextCursor: page < totalPages ? page + 1 : null,
+    });
   } catch (error) {
     console.log("Error while getting invoices", error);
     return NextResponse.json(
