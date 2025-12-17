@@ -36,7 +36,6 @@
 
 "use client";
 
-import { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import axios from "axios";
@@ -55,7 +54,7 @@ const fetchCustomers = async (): Promise<Customer[]> => {
   return res.data.customers;
 };
 
-export default function CustomersList({ user }: { user: User }) {
+export default function CustomersList({ user }: { user: string }) {
   const { data: customers, isLoading } = useQuery({
     queryKey: ["customers"],
     queryFn: fetchCustomers,

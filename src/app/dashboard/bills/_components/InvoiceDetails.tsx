@@ -982,7 +982,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -1102,7 +1101,7 @@ const addPaymentLog = async ({
   return res.data;
 };
 
-export default function InvoiceDetails({ user }: { user: User }) {
+export default function InvoiceDetails({ user }: { user: string }) {
   const { id } = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();

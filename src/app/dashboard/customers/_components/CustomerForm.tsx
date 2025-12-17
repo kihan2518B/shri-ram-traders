@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 
 
 interface CustomerFormProps {
-  user: User;
+  user: string;
 }
 
 export default function CustomerForm({ user }: CustomerFormProps) {
@@ -35,7 +35,7 @@ export default function CustomerForm({ user }: CustomerFormProps) {
         name,
         gstNumber,
         address,
-        userId: user?.id,
+        userId: user,
       });
 
       if (res.status === 201) {

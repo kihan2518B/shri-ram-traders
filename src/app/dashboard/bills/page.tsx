@@ -1,14 +1,7 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import InvoicesComponent from './_components/InvoiceComponent'
+import InvoicesComponent from "./_components/InvoiceComponent";
+import { headers } from "next/headers";
 
 export default async function InvoicesPage() {
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
-
-  if (!data.user) {
-    redirect('/login')
-  }
-
-  return <InvoicesComponent user={data.user} />
+  const user = headers().get("x-user");
+  return <InvoicesComponent user={user} />;
 }

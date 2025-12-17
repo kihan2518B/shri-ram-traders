@@ -3,18 +3,17 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Building2, FileSpreadsheet } from 'lucide-react'
 
-import { User } from '@supabase/auth-helpers-react'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import OrganizationForm from '@/app/dashboard/organization/_components/OrganizationForm'
-import { Organization } from '@prisma/client'
+import { Organization } from '../../generated/prisma'
 
 const fetchOrg = async () => {
     const res = await axios.get("/api/organizations")
     return res.data.organizations
 }
 
-export default function OrganizationPage({user}:{user:User}) {
+export default function OrganizationPage() {
     const { data: organizations } = useQuery({
         queryKey: ['organizations'],
         queryFn: () => fetchOrg(),

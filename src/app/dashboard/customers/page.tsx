@@ -2,19 +2,16 @@ import { redirect } from "next/navigation";
 import CustomerForm from "./_components/CustomerForm";
 import CustomersList from "./_components/CustomersList";
 import { createClient } from "@/utils/supabase/server";
+import { headers } from "next/headers";
 
 export default async function CustomersPage() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data) {
-    redirect("/login");
-  }
+    const user = headers().get("x-user");
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">customers</h1>
-      <CustomerForm user={data.user!} />
-      {data.user && <CustomersList user={data.user!} />}
+      <CustomerForm user={String(user)} />
+      {user && <CustomersList user={user} />}
     </div>
   );
 }

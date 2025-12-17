@@ -31,8 +31,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { Invoice } from "../../../../../generated/prisma";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends Invoice, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   globalFilter?: string;
@@ -44,7 +45,7 @@ interface DataTableProps<TData, TValue> {
   isFetchingNextPage?: boolean;
   isLoading?: boolean;
 }
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends Invoice, TValue>({
   columns,
   data,
   globalFilter,
@@ -149,16 +150,18 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      <Link href={`/dashboard/bills/${cell.row.id}`}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </Link>
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    return (
+                      <TableCell key={cell.id}>
+                        <Link href={`/dashboard/bills/${cell.row.original.id}`}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </Link>
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

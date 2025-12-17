@@ -16,7 +16,7 @@ const fetchReport = async (dateRange: [Date | null, Date | null]) => {
   return data;
 };
 
-export default function ReportPage({ user }: { user: User }) {
+export default function ReportPage() {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
     DateTime.now().minus({ days: 30 }).toJSDate(),
     DateTime.now().toJSDate(),

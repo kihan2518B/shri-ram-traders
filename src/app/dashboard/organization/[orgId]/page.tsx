@@ -27,9 +27,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Invoice } from "@prisma/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Prisma } from "../../../../../generated/prisma";
+
+type InvoiceWithCustomer = Prisma.InvoiceGetPayload<{
+  include: { customer: true };
+}>;
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -395,18 +399,18 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                 <TableBody>
                   {org.invoices
                     .filter((I) => I.invoiceType == "DEBIT")
-                    .map((invoice: Invoice) => (
+                    .map((invoice: InvoiceWithCustomer) => (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">
                           {invoice.invoiceNumber}
                         </TableCell>
                         <TableCell>
-                          <div>{formatDate(invoice.createdAt)}</div>
+                          <div>{formatDate(invoice.createdAt.toDateString())}</div>
                           <div className="text-xs text-gray-500">
-                            {daysAgo(invoice.createdAt)} days ago
+                            {daysAgo(invoice.createdAt.toDateString())} days ago
                           </div>
                         </TableCell>
-                        <TableCell>{invoice?.customer.name}</TableCell>
+                        <TableCell>{invoice?.customer?.name}</TableCell>
                         <TableCell>{invoice.vehicalNumber ?? "-"}</TableCell>
                         <TableCell className="text-right">
                           ₹
@@ -467,9 +471,9 @@ export default async function Page({ params }: { params: { orgId: string } }) {
                           {invoice.invoiceNumber}
                         </TableCell>
                         <TableCell>
-                          <div>{formatDate(invoice?.createdAt)}</div>
+                          <div>{formatDate(invoice?.createdAt.toDateString())}</div>
                           <div className="text-xs text-gray-500">
-                            {daysAgo(invoice?.createdAt)} days ago
+                            {daysAgo(invoice?.createdAt.toDateString())} days ago
                           </div>
                         </TableCell>
                         <TableCell>{invoice?.customer?.name}</TableCell>

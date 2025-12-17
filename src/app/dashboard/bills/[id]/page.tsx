@@ -1,21 +1,19 @@
-import { createClient } from '@/utils/supabase/server'
-import { redirect, useParams } from 'next/navigation'
-import React from 'react'
-import InvoiceDetails from '../_components/InvoiceDetails'
-import Link from 'next/link'
+import { createClient } from "@/utils/supabase/server";
+import React from "react";
+import InvoiceDetails from "../_components/InvoiceDetails";
+import Link from "next/link";
+import { headers } from "next/headers";
 
 export default async function Page() {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const user = headers().get("x-user");
 
-    if (!data.user) {
-        redirect('/auth/login')
-    }
-
-    return (
-        <div className='w-full p-6'>
-            <Link className='border-2 p-2 rounded' href={'/dashboard/bills'}>Back</Link>
-            <InvoiceDetails user={data.user} />
-        </div>
-    )
+  return (
+    <div className="w-full p-6">
+      <Link className="border-2 p-2 rounded" href={"/dashboard/bills"}>
+        Back
+      </Link>
+      <InvoiceDetails user={String(user)} />
+    </div>
+  );
 }
