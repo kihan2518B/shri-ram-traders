@@ -1,11 +1,9 @@
-import { createClient } from "@/utils/supabase/server";
 import React from "react";
 import InvoiceDetails from "../_components/InvoiceDetails";
 import Link from "next/link";
 import { headers } from "next/headers";
 
 export default async function Page() {
-  const supabase = await createClient();
   const user = headers().get("x-user");
 
   return (
