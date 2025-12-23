@@ -1373,7 +1373,7 @@ export default function InvoiceDetails({ user }: { user: string }) {
   const items = invoice.items || [];
   const paymentLogs = invoice.payments || [];
   const totalPaid = paymentLogs.reduce(
-    (sum: number, log: any) => sum + log.amount,
+    (sum: number, log: any) => Number(sum) + Number(log.amount),
     0
   );
   const remainingAmount =

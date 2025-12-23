@@ -1,36 +1,34 @@
-"use client";
-import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-interface Filters {
-  customer: string;
-  organization: string;
-  status: string;
-}
-
-export const useInvoiceFilters = (allInvoices: any[]) => {
-  const [filters, setFilters] = useState<Filters>({
-    customer: "",
-    organization: "",
-    status: "",
+export const useOrganizations = () => {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["organizations"],
+    queryFn: async () => {
+      const res = await fetch("/api/organizations");
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return res.json();
+    },
+    staleTime: 60 * 60 * 1000, // 60 minutes
   });
+  console.log("data: ", data);
+  return { data, isLoading, isError };
+};
 
-  const customerOptions = useMemo(() => {
-    const uniqueCustomers = Array.from(
-      new Set(
-        allInvoices
-          .map((invoice) => invoice.customer?.name || invoice.billerName)
-          .filter(Boolean)
-      )
-    );
-    return ["all", ...uniqueCustomers];
-  }, [allInvoices]);
+export const useCustomers = () => {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["customers"],
+    queryFn: async () => {
+      const res = await fetch("/api/customers");
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return res.json();
+    },
+    staleTime: 60 * 60 * 1000, // 60 minutes
+  });
+  // console.log("data: ", data);
 
-  const organizationOptions = useMemo(() => {
-    const uniqueOrgs = Array.from(
-      new Set(allInvoices.map((invoice) => invoice.organization.name))
-    );
-    return ["all", ...uniqueOrgs];
-  }, [allInvoices]);
-
-  return { filters, setFilters, customerOptions, organizationOptions };
+  return { data, isLoading, isError };
 };

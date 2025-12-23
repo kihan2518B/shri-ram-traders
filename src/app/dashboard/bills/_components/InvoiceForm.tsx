@@ -483,18 +483,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { User } from "@supabase/supabase-js";
 import axios from "axios";
 import { Plus, Trash2, ChevronDown, Save, Truck, Receipt } from "lucide-react";
 import toast from "react-hot-toast";
-
-const fetchCustomers = async () => {
-  const res = await axios.get("/api/invoices", {
-    params: { getorgandcust: true },
-  });
-  return res.data;
-};
+import { useCustomers, useOrganizations } from "@/hooks/useInvoiceFilters";
+import { useInvoices } from "@/hooks/invoice";
 
 const gstOptions = [
   { label: "5%", value: 5 },
@@ -519,13 +513,7 @@ const productsOptions = [
   { label: "Wooden Dust", value: "WoodenDust" },
 ];
 
-export default function InvoiceForm({
-  user,
-  refetch,
-}: {
-  user: User;
-  refetch: () => void;
-}) {
+export default function InvoiceForm({ user }: { user: any }) {
   const [customerId, setCustomerId] = useState("");
   const [organizationId, setOrganizationId] = useState("");
   const [vehicalNumber, setVehicalNumber] = useState("");
@@ -539,11 +527,17 @@ export default function InvoiceForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isItemsExpanded, setIsItemsExpanded] = useState(true);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["customers and organizations"],
-    queryFn: fetchCustomers,
-    enabled: !!user,
-  });
+  const {
+    data: customers,
+    isLoading: isCustomerLoading,
+    isError: isCustomerError,
+  } = useCustomers();
+  const {
+    data: organizations,
+    isLoading: isOrganizationLoading,
+    isError: isOrganizationError,
+  } = useOrganizations();
+  const {refetch} = useInvoices(user);
 
   // Effect to update item details when product name changes
   useEffect(() => {
@@ -720,14 +714,14 @@ export default function InvoiceForm({
                 value={customerId}
                 onChange={(e) => setCustomerId(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isCustomerLoading}
                 className="w-full p-3 rounded-md border border-neutral-border text-neutral-text bg-neutral-white focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none disabled:bg-neutral-disabled appearance-none"
               >
                 <option value="">Select a customer</option>
-                {isLoading ? (
+                {isCustomerLoading ? (
                   <option>Loading...</option>
                 ) : (
-                  data?.customers.map((customer: any) => (
+                  customers.customers.map((customer: any) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.name}
                     </option>
@@ -751,14 +745,14 @@ export default function InvoiceForm({
                 value={organizationId}
                 onChange={(e) => setOrganizationId(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isOrganizationLoading}
                 className="w-full p-3 rounded-md border border-neutral-border text-neutral-text bg-neutral-white focus:ring-2 focus:ring-primary-ring focus:border-primary focus:outline-none disabled:bg-neutral-disabled appearance-none"
               >
                 <option value="">Select an organization</option>
-                {isLoading ? (
+                {isOrganizationLoading ? (
                   <option>Loading...</option>
                 ) : (
-                  data?.organizations.map((org: any) => (
+                  organizations.organizations.map((org: any) => (
                     <option key={org.id} value={org.id}>
                       {org.name}
                     </option>
@@ -1047,7 +1041,7 @@ export default function InvoiceForm({
         <div className="pt-4">
           <button
             type="submit"
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmitting}
             className="w-full px-6 py-3 text-neutral-white bg-primary rounded-md hover:bg-primary-hover disabled:bg-primary-disabled transition-colors flex items-center justify-center gap-2 font-medium"
           >
             <Save className="w-5 h-5" />

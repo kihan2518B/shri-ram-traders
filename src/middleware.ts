@@ -8,7 +8,6 @@ export function middleware(request: NextRequest) {
   const isPublic = PUBLIC_ROUTES.includes(pathname);
 
   const user = request.cookies.get("user")?.value;
-  console.log("user from middleware: ",user);
   
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));

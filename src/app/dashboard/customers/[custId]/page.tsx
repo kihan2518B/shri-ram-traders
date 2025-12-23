@@ -217,7 +217,7 @@ const MobileInvoiceList = ({
             <div className="text-right">
               <p
                 className={`font-semibold ${
-                  invoice.invoiceType === "Credit"
+                  invoice.invoiceType === "CREDIT"
                     ? "text-blue-900"
                     : "text-purple-900"
                 }`}
@@ -227,7 +227,7 @@ const MobileInvoiceList = ({
                   maximumFractionDigits: 2,
                 })}
               </p>
-              {invoice.invoiceType !== "Credit" && (
+              {invoice.invoiceType !== "CREDIT" && (
                 <p className="text-xs text-gray-500">Refund</p>
               )}
             </div>
@@ -255,17 +255,17 @@ export default function CustomerDetailsPage() {
   const invoices = customer.invoices as Invoice[];
   const pendingInvoices = invoices.filter((inv) => inv.status === "PENDING");
   const paidInvoices = invoices.filter((inv) => inv.status === "COMPLETED");
+  console.log("invoices: ", invoices);
 
   const analytics = {
-    totalBilled: invoices
-      .filter((inv) => inv.invoiceType === "Credit")
-      .reduce((sum, inv) => sum + inv.grandTotal, 0),
+    totalBilled: invoices.reduce((sum, inv) => sum + inv.grandTotal, 0),
     totalRefunded: invoices
-      .filter((inv) => inv.invoiceType === "Debit")
+      .filter((inv) => inv.invoiceType === "CREDIT")
       .reduce((sum, inv) => sum + inv.grandTotal, 0),
-    pendingAmount: pendingInvoices
-      .filter((inv) => inv.invoiceType === "Credit")
-      .reduce((sum, inv) => sum + inv.grandTotal, 0),
+    pendingAmount: pendingInvoices.reduce(
+      (sum, inv) => sum + inv.grandTotal,
+      0
+    ),
     totalInvoices: invoices.length,
     pendingInvoices: pendingInvoices.length,
     completedInvoices: paidInvoices.length,
@@ -279,10 +279,8 @@ export default function CustomerDetailsPage() {
         : "N/A",
     avgInvoiceValue:
       invoices.length > 0
-        ? invoices
-            .filter((inv) => inv.invoiceType === "Credit")
-            .reduce((sum, inv) => sum + inv.grandTotal, 0) /
-          invoices.filter((inv) => inv.invoiceType === "Credit").length
+        ? invoices.reduce((sum, inv) => sum + inv.grandTotal, 0) /
+          invoices.length
         : 0,
   };
 
@@ -551,7 +549,7 @@ export default function CustomerDetailsPage() {
                             <Badge
                               variant="outline"
                               className={
-                                invoice.invoiceType === "Credit"
+                                invoice.invoiceType === "CREDIT"
                                   ? "bg-blue-50 text-blue-700 border-blue-200"
                                   : "bg-purple-50 text-purple-700 border-purple-200"
                               }
