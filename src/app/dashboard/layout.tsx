@@ -4,7 +4,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import CustomAdminSideBar from "@/components/CustomAdminSidebar";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { Toaster } from "react-hot-toast";
-import { supabaseClient } from "@/utils/supabase";
 
 export default function DashboardLayout({
   children,
@@ -16,20 +15,18 @@ export default function DashboardLayout({
       <SidebarProvider>
         <SidebarTrigger className="" />
         <CustomAdminSideBar />
-        <SessionContextProvider supabaseClient={supabaseClient}>
-          {children}
-          <Toaster
-            position="top-right"
-            reverseOrder={false}
-            toastOptions={{
-              style: {
-                fontFamily: "inherit",
-                fontSize: "0.875rem",
-                fontWeight: "500",
-              },
-            }}
-          />
-        </SessionContextProvider>
+        {children}
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+          toastOptions={{
+            style: {
+              fontFamily: "inherit",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+            },
+          }}
+        />
       </SidebarProvider>
     </div>
   );

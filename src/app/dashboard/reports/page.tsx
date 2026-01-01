@@ -1,5 +1,10 @@
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ReportPage from "./_components/ReportPage";
 
 export default async function Page() {
-  return <ReportPage />;
+  return (
+    <ErrorBoundary>
+      <ReportPage />
+    </ErrorBoundary>
+  );
 }

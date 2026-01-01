@@ -483,8 +483,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
-import axios from "axios";
 import { Plus, Trash2, ChevronDown, Save, Truck, Receipt } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCustomers, useOrganizations } from "@/hooks/useInvoiceFilters";
@@ -537,7 +535,7 @@ export default function InvoiceForm({ user }: { user: any }) {
     isLoading: isOrganizationLoading,
     isError: isOrganizationError,
   } = useOrganizations();
-  const {refetch} = useInvoices(user);
+  const { refetch } = useInvoices(user);
 
   // Effect to update item details when product name changes
   useEffect(() => {
@@ -637,6 +635,7 @@ export default function InvoiceForm({ user }: { user: any }) {
 
   const updateItem = (index: number, field: string, value: string | number) => {
     const newItems = [...items];
+    if (!newItems[index]) return;
     newItems[index] = { ...newItems[index], [field]: value };
 
     // If product name is changed, update HSN and unit automatically
@@ -658,10 +657,11 @@ export default function InvoiceForm({ user }: { user: any }) {
 
     setItems(newItems);
   };
-
-  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-  const gstAmount = (totalAmount * (gstPercentage / 100)).toFixed(0);
-  const grandTotal = totalAmount + Number(gstAmount);
+  const totalAmount = Array.isArray(items)
+    ? items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+    : 0;
+  const gstAmount = Math.round(totalAmount * (gstPercentage / 100));
+  const grandTotal = Number(totalAmount) + Number(gstAmount);
 
   return (
     <div className="w-full mx-auto p-3 sm:p-6">
@@ -720,12 +720,14 @@ export default function InvoiceForm({ user }: { user: any }) {
                 <option value="">Select a customer</option>
                 {isCustomerLoading ? (
                   <option>Loading...</option>
-                ) : (
+                ) : Array.isArray(customers?.customers) ? (
                   customers.customers.map((customer: any) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.name}
                     </option>
                   ))
+                ) : (
+                  <option disabled>No customers found</option>
                 )}
               </select>
               <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-neutral-text pointer-events-none" />
@@ -751,12 +753,14 @@ export default function InvoiceForm({ user }: { user: any }) {
                 <option value="">Select an organization</option>
                 {isOrganizationLoading ? (
                   <option>Loading...</option>
-                ) : (
+                ) : Array.isArray(organizations?.organizations) ? (
                   organizations.organizations.map((org: any) => (
                     <option key={org.id} value={org.id}>
                       {org.name}
                     </option>
                   ))
+                ) : (
+                  <option disabled>No organizations found</option>
                 )}
               </select>
               <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-neutral-text pointer-events-none" />

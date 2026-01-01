@@ -1,9 +1,12 @@
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import OrganizationPage from "@/components/OrganizationsPage";
 
 export default async function Page() {
   return (
     <div>
-      <OrganizationPage />
+      <ErrorBoundary>
+        <OrganizationPage />
+      </ErrorBoundary>
     </div>
   );
 }

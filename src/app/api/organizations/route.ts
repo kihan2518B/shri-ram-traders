@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
@@ -51,10 +50,9 @@ export async function GET(req: Request) {
     const cookiedata = cookies().get("user")?.value;
 
     const data = JSON.parse(cookiedata || "{}");
+    console.log("data ord`: ", data);
+
     if (!data || !data.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (!data) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
