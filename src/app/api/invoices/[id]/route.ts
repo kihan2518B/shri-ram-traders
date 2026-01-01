@@ -64,7 +64,6 @@ export async function PATCH(req: Request, context: any) {
       );
     }
     if (AddPaymentLog) {
-      console.log("data: ", data);
       if (!data.amount) {
         return NextResponse.json(
           { message: "Amount is required to add payment log" },

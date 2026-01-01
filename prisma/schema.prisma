@@ -29,6 +29,13 @@ model User {
   @@index([email])
 }
 
+model Subscription {
+  id       String @id @default(uuid())
+  endpoint String
+  p256dh   String
+  auth     String
+}
+
 model Organization {
   id                   String    @id @default(uuid())
   name                 String

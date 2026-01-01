@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePWAInstall } from "@/hooks/usepwainstall";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { subscribeUser, unsubscribeUser, sendNotification } from "./actions";
 
 export default function Home() {
@@ -90,7 +90,7 @@ function PushNotificationManager() {
   }
 
   return (
-    <div className="border-2">
+    <div>
       <h3>Push Notifications</h3>
       {subscription ? (
         <>
@@ -120,40 +120,46 @@ function PushNotificationManager() {
 }
 
 function InstallPrompt() {
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const deferredPrompt = useRef<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
-    setIsIOS(
-      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
-    );
+    if (typeof window === "undefined") return;
 
-    setIsStandalone(window.matchMedia("(display-mode: standalone)").matches);
+    const handler = (event: any) => {
+      event.preventDefault();
+      deferredPrompt.current = event;
+      setCanInstall(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
   }, []);
 
-  if (isStandalone) {
-    return null; // Don't show install button if already installed
+  async function install() {
+    if (!deferredPrompt.current) return;
+
+    const result = await deferredPrompt.current.prompt();
+    console.log("Install result:", result.outcome);
+
+    deferredPrompt.current = null;
+    setCanInstall(false);
   }
+
+  if (!canInstall) return null;
 
   return (
     <div>
       <h3>Install App</h3>
-      <button>Add to Home Screen</button>
-      {isIOS && (
-        <p>
-          To install this app on your iOS device, tap the share button
-          <span role="img" aria-label="share icon">
-            {" "}
-            ⎋{" "}
-          </span>
-          and then "Add to Home Screen"
-          <span role="img" aria-label="plus icon">
-            {" "}
-            ➕{" "}
-          </span>
-          .
-        </p>
-      )}
+      <button
+        className="bg-primary hover:bg-primary/90 p-1 text-white rounded"
+        onClick={install}
+      >
+        Add to Home Screen
+      </button>
     </div>
   );
 }

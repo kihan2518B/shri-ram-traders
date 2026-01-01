@@ -269,7 +269,6 @@ export default function InvoicesList({
     []
   );
 
-  console.log("filteredInvoices: ", totalpages);
   // React Table instance
   const table = useReactTable({
     data: filteredInvoices,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import webPush from "@/lib/wep-push";
 
 type inputBody = {
   customerId: string;
@@ -100,6 +101,28 @@ export async function POST(request: Request) {
             invoiceCount: organization.invoiceCount + 1,
           },
         });
+      }
+    }
+    const payload = JSON.stringify({
+      title: "Bill Created",
+      body: `Bill #${invNumber} for ₹${grandTotal} created`,
+      url: `/dashboard/bills/${invoice.id}`,
+    });
+    const subscription = await prisma.subscription.findFirst();
+    if (subscription) {
+      try {
+        await webPush.sendNotification(
+          {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: subscription.p256dh,
+              auth: subscription.auth,
+            },
+          },
+          payload
+        );
+      } catch (err) {
+        console.error("Push failed", err);
       }
     }
 
