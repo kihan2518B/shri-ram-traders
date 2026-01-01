@@ -80,16 +80,16 @@ export default function Login() {
                 htmlFor="email-address"
                 className="block text-sm font-medium text-navy-700"
               >
-                Email address
+                User Name
               </label>
               <input
                 id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
+                name="username"
+                type="text"
+                autoComplete="username"
                 required
                 className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 text-navy-900 focus:outline-none focus:ring-navy-500 focus:border-navy-500 sm:text-sm"
-                placeholder="Enter your email"
+                placeholder="Enter your username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />

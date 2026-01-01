@@ -1,17 +1,16 @@
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, context: any) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+    const cookiedata = cookies().get("user")?.value;
+    const data = JSON.parse(cookiedata || "{}");
+    if (!data || !data.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
     const { id } = context.params;
     if (!id)
       return NextResponse.json({ message: "No invoice id" }, { status: 400 });
@@ -38,15 +37,12 @@ export async function GET(req: Request, context: any) {
 
 export async function PATCH(req: Request, context: any) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+    const cookiedata = cookies().get("user")?.value;
+    const userdata = JSON.parse(cookiedata || "{}");
+    if (!userdata || !userdata.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
     const { searchParams } = new URL(req.url);
     const AddPaymentLog = searchParams.get("AddPaymentLog");
     const { id } = context.params;

@@ -167,7 +167,6 @@ export async function POST(req: Request) {
     organization,
   } = await req.json();
   const isFireWood = items.some((item: any) => item.name == "FireWood");
-  console.log("items: ", items, isFireWood);
   // Load the template PDF
   const templatePath = path.join(
     process.cwd(),
@@ -191,7 +190,7 @@ export async function POST(req: Request) {
   const grandTotal = totalAmount + gstAmount;
   // Format total amount in words without the Rupee symbol
   const totalAmountInWords = numberToWords(grandTotal);
-  console.log("totalAmountInWords: ", totalAmountInWords);
+
 
   // Fill form fields
   form.getTextField("OrganizationName")?.setText(organization.name);

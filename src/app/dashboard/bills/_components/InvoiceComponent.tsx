@@ -281,7 +281,6 @@ export default function InvoicesComponent({ user }: { user: any }) {
     organization: "",
     status: "",
   });
-
   const {
     data: customers,
     isLoading: isCustomerLoading,

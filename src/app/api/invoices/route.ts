@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 type inputBody = {
   customerId: string;
@@ -26,10 +27,9 @@ type item = {
 };
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user) {
+  const cookiedata = cookies().get("user")?.value;
+  const data = JSON.parse(cookiedata || "{}");
+  if (!data) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     }`;
     const invoice = await prisma.invoice.create({
       data: {
-        userId: data.user.id,
+        userId: data.id,
         invoiceNumber: invNumber,
         customerId,
         organizationId,
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       }
     );
   } catch (error) {
-    console.log("Error creating invoice:", error);
+    console.error("Error creating invoice:", error);
     return NextResponse.json(
       { error: "Failed to create invoice" },
       { status: 500 }
@@ -119,12 +119,12 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user) {
+  const cookiedata = cookies().get("user")?.value;
+  const data = JSON.parse(cookiedata || "{}");
+  if (!data || !data.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   try {
     const { searchParams } = new URL(request.url);
     const getorgandcustid = searchParams.get("getorgandcust");
@@ -141,11 +141,9 @@ export async function GET(request: Request) {
       // Ensure endDate covers the entire day
       endDate.setHours(23, 59, 59, 999);
 
-      console.log("Fetching invoices between dates:", startDate, endDate);
-
       const invoices = await prisma.invoice.findMany({
         where: {
-          userId: data.user?.id,
+          userId: data?.id,
           createdAt: {
             gte: startDate,
             lte: endDate,
@@ -171,7 +169,7 @@ export async function GET(request: Request) {
 
     if (getorgandcustid) {
       const user = await prisma.user.findUnique({
-        where: { id: data.user?.id },
+        where: { id: data?.id },
         include: { Organization: true, customers: true },
       });
       if (!user)
@@ -211,7 +209,7 @@ export async function GET(request: Request) {
       nextCursor: page < totalPages ? page + 1 : null,
     });
   } catch (error) {
-    console.log("Error while getting invoices", error);
+    console.error("Error while getting invoices", error);
     return NextResponse.json(
       { message: "Failed to get invoices" },
       { status: 500 }

@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { Expenses, Invoice, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { Expenses, Invoice, Prisma } from "../../../../generated/prisma";
+import { cookies } from "next/headers";
 
 export async function GET(req: Request) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-
-  if (!data.user) {
+  const cookiedata = cookies().get("user")?.value;
+  console.log("cookiedata ;",cookiedata);
+  
+  const data = JSON.parse(cookiedata || "{}");
+  if (!data || !data.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -36,14 +38,14 @@ export async function GET(req: Request) {
     filters.push({ customerId });
   }
   const organizations = await prisma.organization.findMany({
-    where: { userId: data.user.id },
+    where: { userId: data.id },
     select: {
       id: true,
       name: true,
     },
   });
   const customers = await prisma.customer.findMany({
-    where: { userId: data.user.id },
+    where: { userId: data.id },
     select: {
       id: true,
       name: true,
@@ -54,8 +56,8 @@ export async function GET(req: Request) {
     where: { AND: filters },
     include: { customer: true, organization: true, payments: true },
     orderBy: {
-      createdAt: 'asc'
-    }
+      createdAt: "asc",
+    },
   });
 
   const expenses = await prisma.expenses.findMany({

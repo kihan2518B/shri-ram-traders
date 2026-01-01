@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import { triggerInstall } from "@/lib/pwa-install";
 
-type InstallState = "idle" | "installable" | "installed";
-
 export default function InstallBanner({
   installState,
 }: {
-  installState: InstallState;
+  installState: "idle" | "installable" | "installed";
 }) {
   const [dismissed, setDismissed] = useState(true);
 
@@ -25,10 +23,15 @@ export default function InstallBanner({
       <div className="flex gap-2">
         <button
           onClick={async () => {
-            const installed = await triggerInstall();
-            if (!installed) {
+            const result = await triggerInstall();
+
+            if (result === "dismissed") {
               localStorage.setItem("pwa-install-dismissed", "1");
               setDismissed(true);
+            }
+
+            if (result === "unavailable") {
+              console.warn("Install not available yet");
             }
           }}
         >

@@ -1,21 +1,23 @@
-import type React from "react"
-import "./globals.css"
-import { Inter } from "next/font/google"
-import { Providers } from "./providers"
-import { Toaster } from "react-hot-toast"
+import type React from "react";
+import "./globals.css";
+import { Inter } from "next/font/google";
+import { Providers } from "./providers";
+import { Toaster } from "react-hot-toast";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Shri Ram Traders - Wholesale Billing",
   description: "Efficient wholesale billing system for Shri Ram Traders",
-  generator: 'v0.dev'
-}
+  generator: "v0.dev",
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
@@ -27,12 +29,15 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SRT Invoice" />
-        <link rel="apple-touch-icon" href="/icons/android-launchericon-192-192.png" />
+        <link
+          rel="apple-touch-icon"
+          href="/icons/android-launchericon-192-192.png"
+        />
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
-        <Toaster position="top-right"/>
+        <Toaster position="top-right" />
       </body>
     </html>
-  )
+  );
 }

@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { initPWAInstall } from "@/lib/pwa-install";
 
-type InstallState = "idle" | "installable" | "installed";
-
 export function usePWAInstall() {
-  const [state, setState] = useState<InstallState>("installable");
+  const [state, setState] = useState<"idle" | "installable" | "installed">(
+    "idle"
+  );
 
   useEffect(() => {
-    initPWAInstall((s: string) => setState(s as InstallState));
+    initPWAInstall(setState);
   }, []);
 
   return state;
