@@ -129,15 +129,12 @@ function InstallPrompt() {
   const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
-    console.log("window;", window);
 
     if (typeof window === "undefined") return;
 
     const handler = (event: any) => {
-      console.log("beforeinstallprompt event fired");
       event.preventDefault();
       deferredPrompt.current = event;
-      console.log("deferredPrompt: ", deferredPrompt);
 
       setCanInstall(true);
     };
@@ -153,12 +150,10 @@ function InstallPrompt() {
     if (!deferredPrompt.current) return;
 
     const result = await deferredPrompt.current.prompt();
-    console.log("Install result:", result.outcome);
 
     deferredPrompt.current = null;
     setCanInstall(false);
   }
-  console.log("canInstall:", canInstall);
   if (!canInstall) return null;
 
   return (
