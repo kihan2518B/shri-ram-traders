@@ -59,8 +59,13 @@ function PushNotificationManager() {
   }
 
   async function subscribeToPush() {
-    console.log("Subscribing to push notifications...");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      throw new Error("Notification permission not granted");
+    }
+
     const registration = await navigator.serviceWorker.ready;
+
     const sub = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(
@@ -124,11 +129,16 @@ function InstallPrompt() {
   const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
+    console.log("window;", window);
+
     if (typeof window === "undefined") return;
 
     const handler = (event: any) => {
+      console.log("beforeinstallprompt event fired");
       event.preventDefault();
       deferredPrompt.current = event;
+      console.log("deferredPrompt: ", deferredPrompt);
+
       setCanInstall(true);
     };
 
@@ -148,7 +158,7 @@ function InstallPrompt() {
     deferredPrompt.current = null;
     setCanInstall(false);
   }
-
+  console.log("canInstall:", canInstall);
   if (!canInstall) return null;
 
   return (

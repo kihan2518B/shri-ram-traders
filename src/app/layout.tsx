@@ -11,7 +11,6 @@ export const metadata = {
   description: "Efficient wholesale billing system for Shri Ram Traders",
   generator: "v0.dev",
   manifest: "/manifest.json",
-  themeColor: "#000000",
 };
 
 export default function RootLayout({

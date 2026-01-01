@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const isPublic = PUBLIC_ROUTES.includes(pathname);
 
   const user = request.cookies.get("user")?.value;
-  
+
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -26,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!sw.js|api|_next/static|_next/image|favicon.ico).*)"],
 };
