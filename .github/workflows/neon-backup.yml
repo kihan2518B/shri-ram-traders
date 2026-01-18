@@ -22,6 +22,8 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
+    container:
+      image: postgres:17
     steps:
       - name: Dump database
         run: |
