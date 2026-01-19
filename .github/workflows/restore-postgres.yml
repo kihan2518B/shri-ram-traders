@@ -1,0 +1,27 @@
+name: Restore PostgreSQL Backup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    container:
+      image: postgres:17
+
+    steps:
+      - name: Download backup artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: neon-backup
+          path: .
+
+      - name: Restore database
+        run: |
+          pg_restore \
+            --no-owner \
+            --no-privileges \
+            -d "$TARGET_DATABASE_URL" \
+            backup.dump
+        env:
+          TARGET_DATABASE_URL: ${{ secrets.TARGET_DATABASE_URL }}
