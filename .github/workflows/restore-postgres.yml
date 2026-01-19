@@ -1,22 +1,22 @@
-name: Restore PostgreSQL Backup
+name: Backup and Restore PostgreSQL
 
 on:
   workflow_dispatch:
 
 jobs:
-  restore:
+  migrate:
     runs-on: ubuntu-latest
     container:
       image: postgres:17
 
     steps:
-      - name: Download backup artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: neon-backup
-          path: .
+      - name: Dump source database
+        run: |
+          pg_dump "$DATABASE_URL" --format=custom --file=backup.dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Restore database
+      - name: Restore to target database
         run: |
           pg_restore \
             --no-owner \
