@@ -286,7 +286,7 @@ export default function InvoiceReport({
                 )
               }
               disabled={!filteredInvoices?.length}
-              className="bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center"
+              className="bg-primary hover:bg-primary/80 text-white flex items-center justify-center"
             >
               <Download className="w-4 h-4 mr-1" />
               <span>PDF</span>
