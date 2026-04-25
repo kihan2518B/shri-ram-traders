@@ -246,7 +246,7 @@ export default function InvoiceReport({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto mt-2 sm:mt-0">
             <Button
               variant="outline"
               size="sm"
@@ -254,7 +254,7 @@ export default function InvoiceReport({
               className="flex items-center gap-1 border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              <span className="hidden sm:inline">Columns</span>
+              <span>Columns</span>
             </Button>
             <Button
               size="sm"
@@ -271,8 +271,8 @@ export default function InvoiceReport({
               disabled={!filteredInvoices?.length}
               className="bg-slate-100 hover:bg-slate-200 text-slate-700"
             >
-              <FileSpreadsheet className="w-4 h-4 sm:mr-1" />
-              <span className="hidden sm:inline">Excel</span>
+              <FileSpreadsheet className="w-4 h-4 mr-1" />
+              <span>Excel</span>
             </Button>
             <Button
               size="sm"
@@ -286,10 +286,10 @@ export default function InvoiceReport({
                 )
               }
               disabled={!filteredInvoices?.length}
-              className="bg-primary-600 hover:bg-primary-700 text-white"
+              className="bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center"
             >
-              <Download className="w-4 h-4 sm:mr-1" />
-              <span className="hidden sm:inline">PDF</span>
+              <Download className="w-4 h-4 mr-1" />
+              <span>PDF</span>
             </Button>
           </div>
         </div>
