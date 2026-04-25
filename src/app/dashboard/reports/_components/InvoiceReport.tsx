@@ -1,8 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { DateTime } from "luxon";
@@ -17,6 +14,7 @@ import {
   AlertCircle,
   Loader2,
   FileText,
+  SlidersHorizontal,
 } from "lucide-react";
 import autoTable from "jspdf-autotable";
 
@@ -33,89 +31,131 @@ interface Invoice {
   gstAmount: number;
   grandTotal: number;
   organization: { name: string; id: string };
-  customer: { name: string };
+  customer: { name: string } | null;
   payments: PaymentLog[];
 }
 
-const generatePDF = (invoices: Invoice[], startDate: Date, endDate: Date) => {
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.text("Invoice Report", 20, 20);
-  doc.setFontSize(12);
+interface Customer {
+  id: string;
+  name: string;
+}
+
+// ─── Column definitions ────────────────────────────────────────────────────
+const ALL_COLUMNS = [
+  { key: "invoiceNumber", label: "Invoice #" },
+  { key: "date", label: "Date" },
+  { key: "organization", label: "Organization" },
+  { key: "customer", label: "Customer" },
+  { key: "type", label: "Type" },
+  { key: "totalAmount", label: "Total (₹)" },
+  { key: "gstAmount", label: "GST (₹)" },
+  { key: "grandTotal", label: "Grand Total (₹)" },
+  { key: "paidAmount", label: "Paid (₹)" },
+] as const;
+
+type ColKey = (typeof ALL_COLUMNS)[number]["key"];
+
+type VisibleCols = Record<ColKey, boolean>;
+
+const DEFAULT_VISIBLE: VisibleCols = {
+  invoiceNumber: true,
+  date: true,
+  organization: true,
+  customer: true,
+  type: true,
+  totalAmount: true,
+  gstAmount: true,
+  grandTotal: true,
+  paidAmount: true,
+};
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+const paidAmount = (inv: Invoice) =>
+  inv.payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+const rowValues = (inv: Invoice): Record<ColKey, string | number> => ({
+  invoiceNumber: inv.invoiceNumber,
+  date: inv.createdAt.split("T")[0],
+  organization: inv.organization.name,
+  customer: inv.customer?.name || "N/A",
+  type: inv.invoiceType,
+  totalAmount: inv.totalAmount,
+  gstAmount: inv.gstAmount,
+  grandTotal: inv.grandTotal,
+  paidAmount: paidAmount(inv),
+});
+
+// ─── PDF ───────────────────────────────────────────────────────────────────
+const generatePDF = (
+  invoices: Invoice[],
+  startDate: Date,
+  endDate: Date,
+  visible: VisibleCols,
+) => {
+  const doc = new jsPDF({ orientation: "landscape" });
+  doc.setFontSize(13);
+  doc.text("Invoice Report", 14, 14);
+  doc.setFontSize(9);
   const s = DateTime.fromJSDate(startDate).toFormat("MMM dd, yyyy");
   const e = DateTime.fromJSDate(endDate).toFormat("MMM dd, yyyy");
-  doc.text(`Date Range: ${s} - ${e}`, 20, 30);
+  doc.text(`Date Range: ${s} – ${e}`, 14, 21);
 
-  const headers = [
-    "Invoice #",
-    "Date",
-    "Organization",
-    "Customer",
-    "Type",
-    "Total (₹)",
-    "GST (₹)",
-    "Grand Total (₹)",
-  ];
+  const activeCols = ALL_COLUMNS.filter((c) => visible[c.key]);
+  const headers = activeCols.map((c) => c.label);
 
-  const data = invoices.map((inv) => [
-    inv.invoiceNumber,
-    inv.createdAt.split("T")[0],
-    inv.organization.name,
-    inv.customer?.name || "N/A",
-    inv.invoiceType,
-    inv.totalAmount.toFixed(2),
-    inv.gstAmount.toFixed(2),
-    inv.grandTotal.toFixed(2),
-  ]);
+  const data = invoices.map((inv) => {
+    const vals = rowValues(inv);
+    return activeCols.map((c) => {
+      const v = vals[c.key];
+      return typeof v === "number" ? (v as number).toFixed(2) : String(v);
+    });
+  });
 
   autoTable(doc, {
-    startY: 40,
+    startY: 28,
     head: [headers],
     body: data,
     theme: "striped",
-    headStyles: { fillColor: [139, 85, 246], textColor: 255 },
-    styles: { fontSize: 10 },
+    headStyles: {
+      fillColor: [139, 85, 246],
+      textColor: 255,
+      fontSize: 7,
+      fontStyle: "bold",
+      halign: "center",
+    },
+    styles: {
+      fontSize: 6.5,
+      cellPadding: 2,
+      overflow: "linebreak",
+    },
     alternateRowStyles: { fillColor: [249, 250, 251] },
+    margin: { left: 10, right: 10 },
   });
 
   doc.save(`invoice-report-${s.replace(/ /g, "")}-${e.replace(/ /g, "")}.pdf`);
 };
 
-const generateExcel = (invoices: Invoice[], startDate: Date, endDate: Date) => {
+// ─── Excel ─────────────────────────────────────────────────────────────────
+const generateExcel = (
+  invoices: Invoice[],
+  startDate: Date,
+  endDate: Date,
+  visible: VisibleCols,
+) => {
   const s = DateTime.fromJSDate(startDate).toFormat("MMM dd, yyyy");
   const e = DateTime.fromJSDate(endDate).toFormat("MMM dd, yyyy");
+
+  const activeCols = ALL_COLUMNS.filter((c) => visible[c.key]);
+  const headers = activeCols.map((c) => c.label);
+
   const wsData = [
     ["Invoice Report"],
-    [`Date Range: ${s} - ${e}`],
+    [`Date Range: ${s} – ${e}`],
     [],
-    [
-      "Invoice #",
-      "Date",
-      "Organization",
-      "Customer",
-      "Type",
-      "Total",
-      "GST",
-      "Grand Total",
-      "Payment Status",
-    ],
+    headers,
     ...invoices.map((inv) => {
-      const paid = inv.payments.reduce(
-        (sum, p) => sum + parseFloat(p.amount),
-        0
-      );
-      const status = paid >= inv.grandTotal ? "COMPLETED" : "PENDING";
-      return [
-        inv.invoiceNumber,
-        inv.createdAt.split("T")[0],
-        inv.organization.name,
-        inv.customer?.name || "N/A",
-        inv.invoiceType,
-        inv.totalAmount,
-        inv.gstAmount,
-        inv.grandTotal,
-        status,
-      ];
+      const vals = rowValues(inv);
+      return activeCols.map((c) => vals[c.key]);
     }),
   ];
 
@@ -125,6 +165,7 @@ const generateExcel = (invoices: Invoice[], startDate: Date, endDate: Date) => {
   XLSX.writeFile(wb, `invoice-report-${Date.now()}.xlsx`);
 };
 
+// ─── Component ─────────────────────────────────────────────────────────────
 export default function InvoiceReport({
   dateRange,
   setDateRange,
@@ -134,31 +175,66 @@ export default function InvoiceReport({
 }: {
   dateRange: [Date | null, Date | null];
   setDateRange: (dateRange: [Date | null, Date | null]) => void;
-  data: { invoices: Invoice[] };
+  data: { invoices: Invoice[]; customers?: Customer[] };
   isLoading: boolean;
   isError: boolean;
 }) {
-  const { data: organizations = [], isLoading: orgLoading } = useQuery({
-    queryKey: ["organizations"],
-    queryFn: async () => {
-      const res = await axios.get("/api/organizations");
-      return res.data.organizations;
-    },
-    staleTime: 1000 * 60 * 60 * 24 * 7, // cache 7 days
-  });
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
-  console.log("data frm invoice: ", data);
-  if (isLoading || !data) return <>Loading...</>;
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [visibleCols, setVisibleCols] = useState<VisibleCols>(DEFAULT_VISIBLE);
+  const [showColPicker, setShowColPicker] = useState(false);
 
-  const filteredInvoices = selectedOrg
-    ? data.invoices.filter((inv) => inv.organization.id === selectedOrg)
-    : data.invoices;
+  if (isLoading || !data) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="animate-spin w-6 h-6 mr-2" /> Loading...
+      </div>
+    );
+  }
 
-  console.log("organizations: ", organizations);
+  // Derive unique orgs from invoices
+  const orgMap = new Map<string, string>();
+  data.invoices.forEach((inv) =>
+    orgMap.set(inv.organization.id, inv.organization.name),
+  );
+  const organizations = Array.from(orgMap.entries()).map(([id, name]) => ({
+    id,
+    name,
+  }));
+
+  const customers: Customer[] = data.customers ?? [];
+
+  const filteredInvoices = data.invoices
+    .filter((inv) => !selectedOrg || inv.organization.id === selectedOrg)
+    .filter(
+      (inv) => !selectedCustomer || inv.customer?.name === selectedCustomer,
+    );
+
+  // For customer dropdown, use customers from API; fall back to unique names from invoices
+  const customerOptions: Customer[] =
+    customers.length > 0
+      ? customers
+      : Array.from(
+          new Map(
+            data.invoices
+              .filter((inv) => inv.customer)
+              .map((inv) => [
+                inv.customer!.name,
+                { id: inv.customer!.name, name: inv.customer!.name },
+              ]),
+          ).values(),
+        );
+
+  const toggleCol = (key: ColKey) =>
+    setVisibleCols((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const activeCols = ALL_COLUMNS.filter((c) => visibleCols[c.key]);
+
   return (
-    <div className="p-1 min-h-screen ">
+    <div className="p-1 min-h-screen">
       <Toaster />
-      <div className="bg-slate-200rounded-xl shadow border border-border-DEFAULT dark:border-border-dark">
+      <div className="bg-slate-200 rounded-xl shadow border border-border-DEFAULT dark:border-border-dark">
+        {/* Header */}
         <div className="p-6 bg-primary-500 text-black rounded-t-xl">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <FileText /> Invoice Report
@@ -167,7 +243,9 @@ export default function InvoiceReport({
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
+          {/* Filter row */}
+          <div className="flex flex-wrap gap-3 items-center">
+            {/* Date range */}
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               <label className="font-medium">Select Date Range</label>
@@ -176,30 +254,62 @@ export default function InvoiceReport({
               selectsRange
               startDate={dateRange[0]}
               endDate={dateRange[1]}
-              onChange={(update) => setDateRange(update)}
+              onChange={(update) =>
+                setDateRange(update as [Date | null, Date | null])
+              }
               dateFormat="MMM dd, yyyy"
               maxDate={new Date()}
               className="border border-border-DEFAULT rounded-md px-3 py-2 bg-white"
             />
 
+            {/* Organization filter */}
             <select
               value={selectedOrg || ""}
               onChange={(e) => setSelectedOrg(e.target.value || null)}
               className="border border-border-DEFAULT rounded-md px-3 py-2 bg-white"
             >
               <option value="">All Organizations</option>
-              {organizations &&
-                organizations.map((org: any) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
             </select>
 
+            {/* Customer filter */}
+            <select
+              value={selectedCustomer || ""}
+              onChange={(e) => setSelectedCustomer(e.target.value || null)}
+              className="border border-border-DEFAULT rounded-md px-3 py-2 bg-white"
+            >
+              <option value="">All Customers</option>
+              {customerOptions.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Column picker toggle */}
+            <Button
+              variant="outline"
+              onClick={() => setShowColPicker((p) => !p)}
+              className="flex items-center gap-1"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Columns
+            </Button>
+
+            {/* Export buttons */}
             <Button
               onClick={() =>
                 filteredInvoices &&
-                generatePDF(filteredInvoices, dateRange[0]!, dateRange[1]!)
+                generatePDF(
+                  filteredInvoices,
+                  dateRange[0]!,
+                  dateRange[1]!,
+                  visibleCols,
+                )
               }
               disabled={!filteredInvoices?.length}
             >
@@ -208,7 +318,12 @@ export default function InvoiceReport({
             <Button
               onClick={() =>
                 filteredInvoices &&
-                generateExcel(filteredInvoices, dateRange[0]!, dateRange[1]!)
+                generateExcel(
+                  filteredInvoices,
+                  dateRange[0]!,
+                  dateRange[1]!,
+                  visibleCols,
+                )
               }
               disabled={!filteredInvoices?.length}
             >
@@ -216,11 +331,32 @@ export default function InvoiceReport({
             </Button>
           </div>
 
-          {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="animate-spin w-6 h-6" /> Loading...
+          {/* Column visibility picker */}
+          {showColPicker && (
+            <div className="flex flex-wrap gap-2 p-3 bg-white border border-border-DEFAULT rounded-lg shadow-sm">
+              {ALL_COLUMNS.map((col) => (
+                <label
+                  key={col.key}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border transition-colors ${
+                    visibleCols[col.key]
+                      ? "bg-primary-500 border-primary-500 text-black"
+                      : "bg-white border-gray-300 text-gray-500"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={visibleCols[col.key]}
+                    onChange={() => toggleCol(col.key)}
+                  />
+                  {col.label}
+                </label>
+              ))}
             </div>
-          ) : isError ? (
+          )}
+
+          {/* Table / states */}
+          {isError ? (
             <div className="text-center text-red-500 py-8">
               <AlertCircle className="w-6 h-6 inline mr-2" />
               Error loading invoices.
@@ -234,40 +370,32 @@ export default function InvoiceReport({
               <table className="w-full text-sm">
                 <thead className="bg-primary-500 text-black">
                   <tr>
-                    <th className="p-2">Invoice #</th>
-                    <th className="p-2">Date</th>
-                    <th className="p-2">Organization</th>
-                    <th className="p-2">Customer</th>
-                    <th className="p-2">Type</th>
-                    <th className="p-2">Total (₹)</th>
-                    <th className="p-2">GST (₹)</th>
-                    <th className="p-2">Grand Total (₹)</th>
+                    {activeCols.map((col) => (
+                      <th key={col.key} className="p-2 whitespace-nowrap">
+                        {col.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredInvoices?.map((inv) => {
-                    const paid = inv.payments.reduce(
-                      (sum, p) => sum + parseFloat(p.amount),
-                      0
-                    );
-                    const status =
-                      paid >= inv.grandTotal ? "COMPLETED" : "PENDING";
+                    const vals = rowValues(inv);
                     return (
                       <tr key={inv.id} className="border-t">
-                        <td className="p-2">{inv.invoiceNumber}</td>
-                        <td className="p-2">{inv.createdAt.split("T")[0]}</td>
-                        <td className="p-2">{inv.organization.name}</td>
-                        <td className="p-2">{inv.customer?.name || "N/A"}</td>
-                        <td className="p-2">{inv.invoiceType}</td>
-                        <td className="p-2 text-right">
-                          {inv.totalAmount.toLocaleString("en-In")}
-                        </td>
-                        <td className="p-2 text-right">
-                          {inv.gstAmount.toLocaleString("en-In")}
-                        </td>
-                        <td className="p-2 text-right">
-                          {inv.grandTotal.toLocaleString("en-In")}
-                        </td>
+                        {activeCols.map((col) => {
+                          const v = vals[col.key];
+                          const isNum = typeof v === "number";
+                          return (
+                            <td
+                              key={col.key}
+                              className={`p-2 ${isNum ? "text-right" : ""}`}
+                            >
+                              {isNum
+                                ? (v as number).toLocaleString("en-IN")
+                                : String(v)}
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })}

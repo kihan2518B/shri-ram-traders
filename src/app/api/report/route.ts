@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { createClient } from "@/utils/supabase/server";
 import { Expenses, Invoice, Prisma } from "../../../../generated/prisma";
 import { cookies } from "next/headers";
 

@@ -9,8 +9,16 @@ import { useQuery } from "@tanstack/react-query";
 
 const fetchReport = async (dateRange: [Date | null, Date | null]) => {
   if (!dateRange[0] || !dateRange[1]) return;
+
+  // Clamp to full local day so boundary dates are always included
+  const start = new Date(dateRange[0]);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(dateRange[1]);
+  end.setHours(23, 59, 59, 999);
+
   const res = await fetch(
-    `/api/report?startDate=${dateRange[0].toISOString()}&endDate=${dateRange[1].toISOString()}`
+    `/api/report?startDate=${start.toISOString()}&endDate=${end.toISOString()}`,
   );
   const data = await res.json();
   return data;
