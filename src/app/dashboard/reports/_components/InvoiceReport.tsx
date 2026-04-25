@@ -1,20 +1,19 @@
 "use client";
 import React, { useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { DateTime } from "luxon";
 import { jsPDF } from "jspdf";
 import * as XLSX from "xlsx";
 import toast, { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
-  Calendar,
   Download,
   FileSpreadsheet,
   AlertCircle,
   Loader2,
   FileText,
   SlidersHorizontal,
+  Building2,
+  UserCircle2,
 } from "lucide-react";
 import autoTable from "jspdf-autotable";
 
@@ -117,7 +116,7 @@ const generatePDF = (
     body: data,
     theme: "striped",
     headStyles: {
-      fillColor: [139, 85, 246],
+      fillColor: [100, 116, 139], // slate-500
       textColor: 255,
       fontSize: 7,
       fontStyle: "bold",
@@ -128,7 +127,7 @@ const generatePDF = (
       cellPadding: 2,
       overflow: "linebreak",
     },
-    alternateRowStyles: { fillColor: [249, 250, 251] },
+    alternateRowStyles: { fillColor: [248, 250, 252] }, // slate-50
     margin: { left: 10, right: 10 },
   });
 
@@ -168,13 +167,11 @@ const generateExcel = (
 // ─── Component ─────────────────────────────────────────────────────────────
 export default function InvoiceReport({
   dateRange,
-  setDateRange,
   data,
   isLoading,
   isError,
 }: {
   dateRange: [Date | null, Date | null];
-  setDateRange: (dateRange: [Date | null, Date | null]) => void;
   data: { invoices: Invoice[]; customers?: Customer[] };
   isLoading: boolean;
   isError: boolean;
@@ -186,8 +183,9 @@ export default function InvoiceReport({
 
   if (isLoading || !data) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <Loader2 className="animate-spin w-6 h-6 mr-2" /> Loading...
+      <div className="flex justify-center items-center py-12 bg-white rounded-xl shadow-sm border border-slate-200">
+        <Loader2 className="animate-spin w-8 h-8 mr-3 text-primary-500" />
+        <span className="text-slate-600 font-medium">Loading invoices...</span>
       </div>
     );
   }
@@ -231,91 +229,36 @@ export default function InvoiceReport({
   const activeCols = ALL_COLUMNS.filter((c) => visibleCols[c.key]);
 
   return (
-    <div className="p-1 min-h-screen">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
       <Toaster />
-      <div className="bg-slate-200 rounded-xl shadow border border-border-DEFAULT dark:border-border-dark">
-        {/* Header */}
-        <div className="p-6 bg-primary-500 text-black rounded-t-xl">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText /> Invoice Report
-          </h1>
-          <p className="text-sm">Generate and download reports by date range</p>
-        </div>
 
-        <div className="p-6 space-y-4">
-          {/* Filter row */}
-          <div className="flex flex-wrap gap-3 items-center">
-            {/* Date range */}
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              <label className="font-medium">Select Date Range</label>
-            </div>
-            <DatePicker
-              selectsRange
-              startDate={dateRange[0]}
-              endDate={dateRange[1]}
-              onChange={(update) =>
-                setDateRange(update as [Date | null, Date | null])
-              }
-              dateFormat="MMM dd, yyyy"
-              maxDate={new Date()}
-              className="border border-border-DEFAULT rounded-md px-3 py-2 bg-white"
-            />
+      {/* Header and Toolbar - Minimal styling */}
+      <div className="p-4 md:p-6 border-b border-slate-200 bg-white space-y-4">
+        {/* Title & Actions Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary-600" />
+              Invoice List
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Detailed breakdown of generated invoices
+            </p>
+          </div>
 
-            {/* Organization filter */}
-            <select
-              value={selectedOrg || ""}
-              onChange={(e) => setSelectedOrg(e.target.value || null)}
-              className="border border-border-DEFAULT rounded-md px-3 py-2 bg-white"
-            >
-              <option value="">All Organizations</option>
-              {organizations.map((org) => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Customer filter */}
-            <select
-              value={selectedCustomer || ""}
-              onChange={(e) => setSelectedCustomer(e.target.value || null)}
-              className="border border-border-DEFAULT rounded-md px-3 py-2 bg-white"
-            >
-              <option value="">All Customers</option>
-              {customerOptions.map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Column picker toggle */}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setShowColPicker((p) => !p)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Columns
-            </Button>
-
-            {/* Export buttons */}
-            <Button
-              onClick={() =>
-                filteredInvoices &&
-                generatePDF(
-                  filteredInvoices,
-                  dateRange[0]!,
-                  dateRange[1]!,
-                  visibleCols,
-                )
-              }
-              disabled={!filteredInvoices?.length}
-            >
-              <Download className="w-4 h-4 mr-1" /> PDF
+              <span className="hidden sm:inline">Columns</span>
             </Button>
             <Button
+              size="sm"
+              variant="secondary"
               onClick={() =>
                 filteredInvoices &&
                 generateExcel(
@@ -326,84 +269,166 @@ export default function InvoiceReport({
                 )
               }
               disabled={!filteredInvoices?.length}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700"
             >
-              <FileSpreadsheet className="w-4 h-4 mr-1" /> Excel
+              <FileSpreadsheet className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Excel</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={() =>
+                filteredInvoices &&
+                generatePDF(
+                  filteredInvoices,
+                  dateRange[0]!,
+                  dateRange[1]!,
+                  visibleCols,
+                )
+              }
+              disabled={!filteredInvoices?.length}
+              className="bg-primary-600 hover:bg-primary-700 text-white"
+            >
+              <Download className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">PDF</span>
             </Button>
           </div>
-
-          {/* Column visibility picker */}
-          {showColPicker && (
-            <div className="flex flex-wrap gap-2 p-3 bg-white border border-border-DEFAULT rounded-lg shadow-sm">
-              {ALL_COLUMNS.map((col) => (
-                <label
-                  key={col.key}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border transition-colors ${
-                    visibleCols[col.key]
-                      ? "bg-primary-500 border-primary-500 text-black"
-                      : "bg-white border-gray-300 text-gray-500"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={visibleCols[col.key]}
-                    onChange={() => toggleCol(col.key)}
-                  />
-                  {col.label}
-                </label>
-              ))}
-            </div>
-          )}
-
-          {/* Table / states */}
-          {isError ? (
-            <div className="text-center text-red-500 py-8">
-              <AlertCircle className="w-6 h-6 inline mr-2" />
-              Error loading invoices.
-            </div>
-          ) : filteredInvoices?.length === 0 ? (
-            <div className="text-center py-8 text-text-muted">
-              No invoices found.
-            </div>
-          ) : (
-            <div className="overflow-x-auto border border-border-DEFAULT dark:border-border-dark rounded">
-              <table className="w-full text-sm">
-                <thead className="bg-primary-500 text-black">
-                  <tr>
-                    {activeCols.map((col) => (
-                      <th key={col.key} className="p-2 whitespace-nowrap">
-                        {col.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredInvoices?.map((inv) => {
-                    const vals = rowValues(inv);
-                    return (
-                      <tr key={inv.id} className="border-t">
-                        {activeCols.map((col) => {
-                          const v = vals[col.key];
-                          const isNum = typeof v === "number";
-                          return (
-                            <td
-                              key={col.key}
-                              className={`p-2 ${isNum ? "text-right" : ""}`}
-                            >
-                              {isNum
-                                ? (v as number).toLocaleString("en-IN")
-                                : String(v)}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
+
+        {/* Filters Row */}
+        <div className="flex flex-col md:flex-row gap-3 pt-2">
+          {/* Org Filter */}
+          <div className="relative w-full md:w-64">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Building2 className="h-4 w-4 text-slate-400" />
+            </div>
+            <select
+              value={selectedOrg || ""}
+              onChange={(e) => setSelectedOrg(e.target.value || null)}
+              className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg pl-10 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="">All Organizations</option>
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Customer Filter */}
+          <div className="relative w-full md:w-64">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <UserCircle2 className="h-4 w-4 text-slate-400" />
+            </div>
+            <select
+              value={selectedCustomer || ""}
+              onChange={(e) => setSelectedCustomer(e.target.value || null)}
+              className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg pl-10 pr-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="">All Customers</option>
+              {customerOptions.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Column Picker Panel */}
+        {showColPicker && (
+          <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-inner mt-4 transition-all">
+            {ALL_COLUMNS.map((col) => (
+              <label
+                key={col.key}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer border transition-colors select-none ${
+                  visibleCols[col.key]
+                    ? "bg-slate-200 border-slate-300 text-slate-800"
+                    : "bg-white border-slate-200 text-slate-400"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={visibleCols[col.key]}
+                  onChange={() => toggleCol(col.key)}
+                />
+                {col.label}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Table Content */}
+      <div className="flex-1 bg-white">
+        {isError ? (
+          <div className="flex flex-col items-center justify-center text-red-500 py-12">
+            <AlertCircle className="w-8 h-8 mb-2" />
+            <p className="font-medium">Error loading invoices</p>
+          </div>
+        ) : filteredInvoices?.length === 0 ? (
+          <div className="text-center py-16 text-slate-400">
+            <FileText className="w-12 h-12 mx-auto text-slate-200 mb-3" />
+            <p className="text-base font-medium text-slate-500">
+              No invoices found
+            </p>
+            <p className="text-sm mt-1">
+              Try adjusting your filters or date range.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                <tr>
+                  {activeCols.map((col) => (
+                    <th
+                      key={col.key}
+                      className="px-4 py-3 font-semibold whitespace-nowrap"
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredInvoices?.map((inv) => {
+                  const vals = rowValues(inv);
+                  return (
+                    <tr
+                      key={inv.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      {activeCols.map((col) => {
+                        const v = vals[col.key];
+                        const isNum = typeof v === "number";
+                        return (
+                          <td
+                            key={col.key}
+                            className={`px-4 py-3 text-slate-700 whitespace-nowrap ${
+                              isNum ? "font-medium" : ""
+                            }`}
+                          >
+                            {isNum ? (
+                              <div className="flex justify-start">
+                                <span>
+                                  ₹{(v as number).toLocaleString("en-IN")}
+                                </span>
+                              </div>
+                            ) : (
+                              String(v)
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

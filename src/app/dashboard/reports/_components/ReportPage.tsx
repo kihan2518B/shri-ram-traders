@@ -1,11 +1,9 @@
 "use client";
-import React, { useEffect } from "react";
-import InvoiceReport from "./InvoiceReport";
-import ReportsPage from "./RevenueReport";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DateTime } from "luxon";
-import { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
+import InvoiceReport from "./InvoiceReport";
+import RevenueReport from "./RevenueReport";
 
 const fetchReport = async (dateRange: [Date | null, Date | null]) => {
   if (!dateRange[0] || !dateRange[1]) return;
@@ -39,10 +37,10 @@ export default function ReportPage() {
   useEffect(() => {
     if (dateRange[0] && dateRange[1]) refetch();
   }, [dateRange, refetch]);
-  console.log("data; ", data);
+
   return (
-    <div className="flex flex-col w-full h-full items-center justify-center">
-      <ReportsPage
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+      <RevenueReport
         report={data}
         dateRange={dateRange}
         setDateRange={setDateRange}
@@ -52,7 +50,6 @@ export default function ReportPage() {
         isError={isError}
         isLoading={isLoading}
         dateRange={dateRange}
-        setDateRange={setDateRange}
       />
     </div>
   );
