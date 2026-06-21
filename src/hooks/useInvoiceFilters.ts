@@ -12,7 +12,6 @@ export const useOrganizations = () => {
     },
     staleTime: 60 * 60 * 1000, // 60 minutes
   });
-  console.log("data: ", data);
   return { data, isLoading, isError };
 };
 

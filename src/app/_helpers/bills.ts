@@ -31,7 +31,6 @@ export async function CreatePdfFromTemplate(data: Data, templatePath: string) {
 
     const totalAmountInWords = toWords(grandTotal) + " only";
     // const totalAmountInWords = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(grandTotal).replace("₹", "INR");
-    console.log("totalAmountInWords: ", totalAmountInWords);
 
     // Fill form fields dynamically
     form.getTextField("OrganizationName")?.setText(organization.name.toUpperCase())
@@ -89,7 +88,6 @@ export async function CreatePdfFromTemplate(data: Data, templatePath: string) {
 
     form.flatten()
     const newPdfBytes = await pdfDoc.save();
-    console.log("newPdfBytes: ", newPdfBytes)
     const outputPath = path.join(process.cwd(), "public/generated/invoice.pdf");
     fs.writeFileSync(outputPath, newPdfBytes);
 

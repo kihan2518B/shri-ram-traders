@@ -257,7 +257,6 @@ export default function CustomerDetailsPage() {
   const invoices = customer.invoices as Invoice[];
   const pendingInvoices = invoices.filter((inv) => inv.status === "PENDING");
   const paidInvoices = invoices.filter((inv) => inv.status === "COMPLETED");
-  console.log("invoices: ", invoices);
 
   const analytics = {
     totalBilled: invoices.reduce((sum, inv) => sum + inv.grandTotal, 0),

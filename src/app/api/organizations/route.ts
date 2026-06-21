@@ -20,7 +20,6 @@ export async function POST(request: Request) {
     userId,
     logo,
   } = body;
-  console.log("body: ", data);
   try {
     const organization = await prisma.organization.create({
       data: {
@@ -50,7 +49,6 @@ export async function GET(req: Request) {
     const cookiedata = cookies().get("user")?.value;
 
     const data = JSON.parse(cookiedata || "{}");
-    console.log("data ord`: ", data);
 
     if (!data || !data.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,7 +62,7 @@ export async function GET(req: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.log("Error while getting organizations @/api/organizations", error);
+    console.error("Error while getting organizations @/api/organizations", error);
     return NextResponse.json(
       { message: "Internal Server Error" },
       { status: 500 }

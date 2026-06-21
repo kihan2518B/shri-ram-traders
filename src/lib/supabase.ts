@@ -9,7 +9,7 @@ export async function UploadFile(file: File, path: string, bucketName: string) {
             cacheControl: '3600',
             upsert: false
         })
-    console.log(error)
+    console.error(error)
     if (!data && error) throw new Error(`Error uploading file ${error}`)
     const NewFile = await supabaseClient.storage.from(bucketName || 'images').getPublicUrl(data.path)
 

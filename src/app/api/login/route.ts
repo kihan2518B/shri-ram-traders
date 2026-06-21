@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
 
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
-  console.log(" username, password: ", username, password);
   if (!username || !password) {
     return NextResponse.json(
       { message: "Missing required fields" },
@@ -25,7 +24,6 @@ export async function POST(req: NextRequest) {
       id: true,
     },
   });
-  console.log("loggedINUser: ", loggedINUser);
   if (!loggedINUser || loggedINUser.password !== password) {
     return NextResponse.json(
       {

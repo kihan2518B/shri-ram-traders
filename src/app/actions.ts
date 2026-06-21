@@ -43,7 +43,6 @@ export async function subscribeUser(sub: PushSubscription) {
   subscription = sub;
   // In a production environment, you would want to store the subscription in a database
   // For example: await db.subscriptions.create({ data: sub })
-  console.log("Storing subscription:", sub);
   const S = await prisma.subscription.create({
     data: {
       endpoint: sub.endpoint,
@@ -51,7 +50,6 @@ export async function subscribeUser(sub: PushSubscription) {
       auth: sub.keys?.auth || "",
     },
   });
-  console.log("Saved subscription to DB:", S);
 
   return { success: true };
 }

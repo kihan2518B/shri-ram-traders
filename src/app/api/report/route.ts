@@ -5,7 +5,6 @@ import { cookies } from "next/headers";
 
 export async function GET(req: Request) {
   const cookiedata = cookies().get("user")?.value;
-  console.log("cookiedata ;",cookiedata);
   
   const data = JSON.parse(cookiedata || "{}");
   if (!data || !data.id) {

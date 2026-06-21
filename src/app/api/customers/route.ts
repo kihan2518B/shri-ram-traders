@@ -11,7 +11,6 @@ export async function POST(request: Request) {
   }
 
   const { name, address, gstNumber } = await request.json();
-  console.log("name, address, gstNumber: ", name, address, gstNumber);
   if (!name || !address || !gstNumber)
     return NextResponse.json(
       { message: "Missing required fields" },

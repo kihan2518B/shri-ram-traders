@@ -27,10 +27,10 @@ export async function GET(req: Request, context: any) {
     });
     return NextResponse.json({ message: "success", invoice }, { status: 200 });
   } catch (error) {
-    console.log("Error while getting invoice @/api/invoices/[id]", error);
+    console.error("Error while getting invoice @/api/invoices/[id]", error);
     return NextResponse.json(
       { message: "Error while getting invoice" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -60,14 +60,14 @@ export async function PATCH(req: Request, context: any) {
     if (!currentInvoice) {
       return NextResponse.json(
         { message: "Invoice not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
     if (AddPaymentLog) {
       if (!data.amount) {
         return NextResponse.json(
           { message: "Amount is required to add payment log" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       // If payment amount is provided in the request
@@ -78,7 +78,7 @@ export async function PATCH(req: Request, context: any) {
       ) {
         return NextResponse.json(
           { message: "Payment amount cannot be greater than invoice amount" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -103,7 +103,7 @@ export async function PATCH(req: Request, context: any) {
       }
       return NextResponse.json(
         { message: "Invoice Updated Successfully", payment },
-        { status: 200 }
+        { status: 200 },
       );
     }
     //update invoice
@@ -123,45 +123,79 @@ export async function PATCH(req: Request, context: any) {
 
     return NextResponse.json(
       { message: "Invoice Updated Successfully", invoice },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
-    console.log("Error while updating invoice @/api/invoices/[id]", error);
+    console.error("Error while updating invoice @/api/invoices/[id]", error);
     return NextResponse.json(
       { message: "Error while updating invoice" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(req: Request, context: any) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
+    const cookiedata = cookies().get("user")?.value;
+    const userdata = JSON.parse(cookiedata || "{}");
+    if (!userdata || !userdata.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
     const { id } = context.params;
     if (!id)
       return NextResponse.json({ message: "No invoice id" }, { status: 400 });
-
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: id },
+      select: {
+        organizationId: true,
+        invoiceType: true,
+        invoiceNumber: true,
+      },
+    });
+    const org = await prisma.organization.findUnique({
+      where: { id: invoice?.organizationId },
+      select: {
+        fireWoodInvoiceCount: true,
+        invoiceCount: true,
+      },
+    });
+    // if debit invoice then reduce count
+    if (invoice?.invoiceType == "DEBIT") {
+      // jalau bill
+      if (invoice.invoiceNumber.includes("J")) {
+        let invoice_number = invoice.invoiceNumber.split("J")[0];
+        if (String(invoice_number) == String(org?.fireWoodInvoiceCount)) {
+          await prisma.organization.update({
+            where: { id: invoice?.organizationId },
+            data: {
+              fireWoodInvoiceCount: { decrement: 1 },
+            },
+          });
+        }
+      } else {
+        // sales invoice
+        if (String(invoice.invoiceNumber) == String(org?.invoiceCount))
+          await prisma.organization.update({
+            where: { id: invoice?.organizationId },
+            data: {
+              invoiceCount: { decrement: 1 },
+            },
+          });
+      }
+    }
     await prisma.invoice.delete({
       where: { id: id },
     });
-
     return NextResponse.json(
       { message: "Invoice Deleted Successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
-    console.log("Error while deleting invoice @/api/invoices/[id]", error);
+    console.error("Error while deleting invoice @/api/invoices/[id]", error);
     return NextResponse.json(
       { message: "Error while deleting invoice" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
