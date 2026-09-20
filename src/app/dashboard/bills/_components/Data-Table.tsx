@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Invoice } from "../../../../../generated/prisma";
+import { TableSkeleton } from "@/components/common/Skeletons";
 
 interface DataTableProps<TData extends Invoice, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -45,6 +46,7 @@ interface DataTableProps<TData extends Invoice, TValue> {
   isFetchingNextPage?: boolean;
   isLoading?: boolean;
 }
+
 export function DataTable<TData extends Invoice, TValue>({
   columns,
   data,
@@ -58,8 +60,7 @@ export function DataTable<TData extends Invoice, TValue>({
   isLoading,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
@@ -83,22 +84,35 @@ export function DataTable<TData extends Invoice, TValue>({
     },
   });
 
+  const handleNextPage = () => {
+    if (table.getCanNextPage()) {
+      table.nextPage();
+    } else if (hasNextPage) {
+      fetchNextPage?.();
+      table.nextPage();
+    }
+  };
+
+  const isNextDisabled = !table.getCanNextPage() && !hasNextPage;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center py-4 px-2">
-        {/* Global Search Input */}
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-2">
         <Input
-          placeholder="Search all columns..."
+          placeholder="Search all invoices..."
           value={table.getState().globalFilter ?? ""}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="max-w-sm border border-black"
+          className="w-full sm:max-w-xs border-gray-300 text-sm"
         />
 
-        {/* Column Visibility Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="ml-auto border border-black rounded-md text-white">
-              Select Columns
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto text-xs text-gray-700"
+            >
+              Columns
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-white">
@@ -109,7 +123,7 @@ export function DataTable<TData extends Invoice, TValue>({
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
-                    className="capitalize"
+                    className="capitalize text-xs"
                     checked={column.getIsVisible()}
                     onCheckedChange={(value) =>
                       column.toggleVisibility(!!value)
@@ -123,19 +137,23 @@ export function DataTable<TData extends Invoice, TValue>({
         </DropdownMenu>
       </div>
 
-      <div className="rounded-md border">
+      {/* Scrollable Container with Max Height */}
+      <div className="rounded-lg border border-gray-200 overflow-x-auto max-h-[60vh] overflow-y-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-50 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="text-black">
+                    <TableHead
+                      key={header.id}
+                      className="text-gray-900 font-semibold text-xs whitespace-nowrap bg-gray-50"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -144,19 +162,32 @@ export function DataTable<TData extends Invoice, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="py-8">
+                  <TableSkeleton rows={4} />
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className="hover:bg-gray-50/80 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => {
                     return (
-                      <TableCell key={cell.id}>
-                        <Link href={`/dashboard/bills/${cell.row.original.id}`}>
+                      <TableCell
+                        key={cell.id}
+                        className="text-xs text-gray-700 whitespace-nowrap py-3"
+                      >
+                        <Link
+                          href={`/dashboard/bills/${cell.row.original.id}`}
+                          className="block w-full"
+                        >
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </Link>
                       </TableCell>
@@ -168,46 +199,54 @@ export function DataTable<TData extends Invoice, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-24 text-center text-sm text-gray-500"
                 >
-                  {isLoading ? "Loading..." : "No results."}
+                  No invoices found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        {hasNextPage && (
+
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-xs text-gray-600">
+        <div>Showing {table.getRowModel().rows.length} records</div>
+        <div>
+          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1} (Total {data.length} records)
+        </div>
+        <div className="flex items-center gap-2">
+          {/* {hasNextPage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchNextPage?.()}
+              disabled={isFetchingNextPage}
+              className="text-xs"
+            >
+              {isFetchingNextPage ? "Loading..." : "Load More"}
+            </Button>
+          )} */}
           <Button
             variant="outline"
-            onClick={() => fetchNextPage?.()} // Call fetchNextPage if it exists
-            disabled={isFetchingNextPage}
-            className="w-full sm:w-auto"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="text-xs"
           >
-            {isFetchingNextPage ? "Loading more..." : "Load More"}
+            Previous
           </Button>
-        )}
-        {/* Show message if all data loaded and there's some data */}
-        {!hasNextPage && data.length > 0 && (
-          <p className="text-sm text-gray-500">All Invoices loaded.</p>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            // onClick={() => table.nextPage()}
+            // disabled={!table.getCanNextPage()}
+            onClick={handleNextPage}
+            disabled={isNextDisabled || isFetchingNextPage}
+            className="text-xs"
+          >
+            {isFetchingNextPage ? "Loading..." : "Next"}
+          </Button>
+        </div>
       </div>
     </div>
   );

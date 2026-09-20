@@ -180,7 +180,7 @@ export default function InvoiceReport({
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [visibleCols, setVisibleCols] = useState<VisibleCols>(DEFAULT_VISIBLE);
   const [showColPicker, setShowColPicker] = useState(false);
-
+  console.log("data: ", data);
   if (isLoading || !data) {
     return (
       <div className="flex justify-center items-center py-12 bg-white rounded-xl shadow-sm border border-slate-200">

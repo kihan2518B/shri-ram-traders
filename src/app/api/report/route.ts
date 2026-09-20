@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   const orgId = searchParams.get("orgId");
   const customerId = searchParams.get("customerId");
 
-  const filters: Prisma.InvoiceWhereInput[] = [];
+  const filters: Prisma.InvoiceWhereInput[] = [{ userId: data.id }];
 
   if (startDate && endDate) {
     filters.push({
@@ -28,13 +28,14 @@ export async function GET(req: Request) {
     });
   }
 
-  if (orgId) {
+  if (orgId && orgId !== "all") {
     filters.push({ organizationId: orgId });
   }
 
-  if (customerId) {
+  if (customerId && customerId !== "all") {
     filters.push({ customerId });
   }
+
   const organizations = await prisma.organization.findMany({
     where: { userId: data.id },
     select: {
@@ -42,6 +43,7 @@ export async function GET(req: Request) {
       name: true,
     },
   });
+
   const customers = await prisma.customer.findMany({
     where: { userId: data.id },
     select: {
@@ -65,6 +67,39 @@ export async function GET(req: Request) {
           ? { gte: new Date(startDate), lte: new Date(endDate) }
           : undefined,
     },
+  });
+
+  // Stock Flow aggregation by item
+  const stockFlowMap: Record<string, { date: string; creditQty: number; debitQty: number; unit: string }> = {};
+
+  invoices.forEach((inv) => {
+    let items: any[] = [];
+    try {
+      items = typeof inv.items === "string" ? JSON.parse(inv.items) : (inv.items as any[]);
+    } catch (e) {
+      items = [];
+    }
+
+    const dateKey = new Date(inv.createdAt).toISOString().split("T")[0];
+
+    if (Array.isArray(items)) {
+      items.forEach((item) => {
+        const itemName = item.name || "WoodenSize";
+        const key = `${dateKey}_${itemName}`;
+        const qty = Number(item.quantity) || 0;
+        const unit = item.unit || "CBM";
+
+        if (!stockFlowMap[key]) {
+          stockFlowMap[key] = { date: dateKey, creditQty: 0, debitQty: 0, unit };
+        }
+
+        if (inv.invoiceType === "CREDIT") {
+          stockFlowMap[key].creditQty += qty;
+        } else {
+          stockFlowMap[key].debitQty += qty;
+        }
+      });
+    }
   });
 
   // Aggregations
@@ -92,5 +127,9 @@ export async function GET(req: Request) {
     expenses,
     customers,
     organizations,
+    stockFlow: Object.entries(stockFlowMap).map(([key, val]) => ({
+      item: key.split("_")[1],
+      ...val,
+    })),
   });
 }

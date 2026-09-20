@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   if (!username || !password) {
     return NextResponse.json(
       { message: "Missing required fields" },
-      { status: 500 }
+      { status: 500 },
     );
   }
   const loggedINUser = await prisma.user.findUnique({
@@ -24,13 +24,14 @@ export async function POST(req: NextRequest) {
       id: true,
     },
   });
+  console.log("loggedINUser:", loggedINUser);
   if (!loggedINUser || loggedINUser.password !== password) {
     return NextResponse.json(
       {
         success: false,
         message: "Invalid credentials",
       },
-      { status: 401 }
+      { status: 401 },
     );
   }
   const user = {

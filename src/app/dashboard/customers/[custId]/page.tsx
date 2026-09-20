@@ -253,6 +253,7 @@ export default function CustomerDetailsPage() {
   });
 
   if (!customer) return <div>Loading...</div>;
+  if (!customer) return <div className="p-6"><TableSkeleton rows={6} /></div>;
 
   const invoices = customer.invoices as Invoice[];
   const pendingInvoices = invoices.filter((inv) => inv.status === "PENDING");

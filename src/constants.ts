@@ -4,6 +4,7 @@ import {
   Building2,
   Users,
   BarChart3,
+  Scale,
 } from "lucide-react";
 
 export const Menuitems = [
@@ -14,6 +15,7 @@ export const Menuitems = [
   },
   {
     title: "Bills",
+    title: "Invoices",
     url: "/dashboard/bills",
     icon: FileText,
   },
@@ -31,5 +33,10 @@ export const Menuitems = [
     title: "Reports",
     url: "/dashboard/reports",
     icon: BarChart3,
+  },
+  {
+    title: "Balance Sheet",
+    url: "/dashboard/balance-sheet",
+    icon: Scale,
   },
 ];

@@ -24,6 +24,8 @@ export const useCustomers = () => {
         throw new Error("Network response was not ok");
       }
       return res.json();
+      const json = await res.json();
+      return json.customers || [];
     },
     staleTime: 60 * 60 * 1000, // 60 minutes
   });

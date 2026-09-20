@@ -4,6 +4,8 @@ import { DateTime } from "luxon";
 import { useQuery } from "@tanstack/react-query";
 import InvoiceReport from "./InvoiceReport";
 import RevenueReport from "./RevenueReport";
+import StockFlowChart from "./StockFlowChart";
+import { TableSkeleton } from "@/components/common/Skeletons";
 
 const fetchReport = async (dateRange: [Date | null, Date | null]) => {
   if (!dateRange[0] || !dateRange[1]) return;
@@ -29,7 +31,8 @@ export default function ReportPage() {
   ]);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["report"],
+    // queryKey: ["report"],
+    queryKey: ["report", dateRange[0]?.toISOString(), dateRange[1]?.toISOString()],
     queryFn: () => fetchReport(dateRange),
     enabled: !!dateRange[0] && !!dateRange[1],
   });
@@ -38,6 +41,14 @@ export default function ReportPage() {
     if (dateRange[0] && dateRange[1]) refetch();
   }, [dateRange, refetch]);
 
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        <TableSkeleton rows={8} />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       <RevenueReport
@@ -45,6 +56,7 @@ export default function ReportPage() {
         dateRange={dateRange}
         setDateRange={setDateRange}
       />
+      <StockFlowChart data={data?.stockFlow || []} />
       <InvoiceReport
         data={data}
         isError={isError}
