@@ -112,7 +112,7 @@ export async function GET(req: Request) {
     .reduce((sum: number, i: Invoice) => sum + i.totalAmount, 0);
 
   const expensesTotal = expenses.reduce(
-    (sum: number, e: Expenses) => sum + e.amount,
+    (sum: number, e: any) => sum + (parseFloat(e.amount) || 0),
     0
   );
 

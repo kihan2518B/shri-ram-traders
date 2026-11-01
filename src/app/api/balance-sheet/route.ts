@@ -83,7 +83,18 @@ export async function GET(req: Request) {
 
     // 4. Compute Stock on Hand Valuation
     // Stock Qty per Item = sum(CREDIT Qty) - sum(DEBIT Qty)
-    const stockQtyMap: Record<string, { unit: string; creditQty: number; debitQty: number; creditTotalCost: number }> = {};
+    // If remainingQty >= 0, value using Avg Purchase (Cost) Rate.
+    // If remainingQty < 0, value using Avg Selling (Debit) Rate to allow negative amount adjustment.
+    const stockQtyMap: Record<
+      string,
+      {
+        unit: string;
+        creditQty: number;
+        creditTotalCost: number;
+        debitQty: number;
+        debitTotalRevenue: number;
+      }
+    > = {};
 
     invoices.forEach((inv) => {
       let items: any[] = [];
@@ -101,7 +112,13 @@ export async function GET(req: Request) {
           const unit = item.unit || "Units";
 
           if (!stockQtyMap[itemName]) {
-            stockQtyMap[itemName] = { unit, creditQty: 0, debitQty: 0, creditTotalCost: 0 };
+            stockQtyMap[itemName] = {
+              unit,
+              creditQty: 0,
+              creditTotalCost: 0,
+              debitQty: 0,
+              debitTotalRevenue: 0,
+            };
           }
 
           if (inv.invoiceType === "CREDIT") {
@@ -109,28 +126,53 @@ export async function GET(req: Request) {
             stockQtyMap[itemName].creditTotalCost += qty * price;
           } else {
             stockQtyMap[itemName].debitQty += qty;
+            stockQtyMap[itemName].debitTotalRevenue += qty * price;
           }
         });
       }
     });
 
-    const stockOnHandItems: { name: string; unit: string; remainingQty: number; avgCostPrice: number; totalValuation: number }[] = [];
+    const stockOnHandItems: {
+      name: string;
+      unit: string;
+      remainingQty: number;
+      avgCostPrice: number;
+      avgSellingPrice: number;
+      valuationRate: number;
+      totalValuation: number;
+    }[] = [];
     let totalStockValuation = 0;
 
     Object.entries(stockQtyMap).forEach(([name, data]) => {
       const remainingQty = data.creditQty - data.debitQty;
-      const avgCostPrice = data.creditQty > 0 ? data.creditTotalCost / data.creditQty : 0;
-      const totalValuation = Math.max(0, remainingQty) * avgCostPrice;
+      const avgCostPrice =
+        data.creditQty > 0 ? data.creditTotalCost / data.creditQty : 0;
+      const avgSellingPrice =
+        data.debitQty > 0 ? data.debitTotalRevenue / data.debitQty : 0;
+
+      // Rate selection:
+      // Positive or zero stock -> use average purchase price (fallback to avg selling price if no purchases)
+      // Negative stock -> use average selling price (fallback to avg cost price if no sales)
+      let valuationRate = 0;
+      if (remainingQty < 0) {
+        valuationRate = avgSellingPrice > 0 ? avgSellingPrice : avgCostPrice;
+      } else {
+        valuationRate = avgCostPrice > 0 ? avgCostPrice : avgSellingPrice;
+      }
+
+      const totalValuation = remainingQty * valuationRate;
 
       stockOnHandItems.push({
         name,
         unit: data.unit,
-        remainingQty: Math.max(0, remainingQty),
+        remainingQty: Math.round(remainingQty * 1000) / 1000,
         avgCostPrice: Math.round(avgCostPrice * 100) / 100,
+        avgSellingPrice: Math.round(avgSellingPrice * 100) / 100,
+        valuationRate: Math.round(valuationRate * 100) / 100,
         totalValuation: Math.round(totalValuation * 100) / 100,
       });
 
-      totalStockValuation += Math.max(0, totalValuation);
+      totalStockValuation += totalValuation;
     });
 
     // 5. Net Assets calculation

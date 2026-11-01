@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Users, BarChart3, Scale, User, Menu } from "lucide-react";
+import { LayoutDashboard, FileText, Users, BarChart3, Scale, User, Menu, UserCheck } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
@@ -33,8 +33,8 @@ export function MobileBottomNav() {
 
   const navItems = [
     { label: "Bills", href: "/dashboard/bills", icon: FileText },
+    { label: "Staff", href: "/dashboard/employees", icon: UserCheck },
     { label: "Customers", href: "/dashboard/customers", icon: Users },
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
     { label: "Balance", href: "/dashboard/balance-sheet", icon: Scale },
   ];

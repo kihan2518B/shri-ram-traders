@@ -99,8 +99,10 @@ export default function BalanceSheetPage() {
                 <Box className="w-5 h-5 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-900">₹{data.totalStockValuation.toLocaleString("en-IN")}</div>
-                <p className="text-xs text-blue-600 mt-1">Total Value of Stock on Hand</p>
+                <div className={`text-2xl font-bold ${data.totalStockValuation < 0 ? "text-red-700" : "text-blue-900"}`}>
+                  {data.totalStockValuation < 0 ? `-₹${Math.abs(data.totalStockValuation).toLocaleString("en-IN")}` : `₹${data.totalStockValuation.toLocaleString("en-IN")}`}
+                </div>
+                <p className="text-xs text-blue-600 mt-1">Net Stock (Purchases - Derived Sales)</p>
               </CardContent>
             </Card>
 
@@ -110,7 +112,9 @@ export default function BalanceSheetPage() {
                 <TrendingUp className="w-5 h-5 text-purple-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-900">₹{data.netAssets.toLocaleString("en-IN")}</div>
+                <div className={`text-2xl font-bold ${data.netAssets < 0 ? "text-red-700" : "text-purple-900"}`}>
+                  {data.netAssets < 0 ? `-₹${Math.abs(data.netAssets).toLocaleString("en-IN")}` : `₹${data.netAssets.toLocaleString("en-IN")}`}
+                </div>
                 <p className="text-xs text-purple-600 mt-1">Stock + Receivables - Payables</p>
               </CardContent>
             </Card>
@@ -202,10 +206,17 @@ export default function BalanceSheetPage() {
           {/* Stock Valuation Table */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center justify-between">
-                <span>Stock on Hand Valuation</span>
-                <span className="text-sm text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full font-bold">
-                  Total Valuation: ₹{data.totalStockValuation.toLocaleString("en-IN")}
+              <CardTitle className="text-lg font-semibold text-gray-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span>Stock on Hand Valuation</span>
+                  <p className="text-xs font-normal text-gray-500 mt-0.5">
+                    Positive stock is valued at Avg Purchase Rate; negative/derived stock is valued at Avg Selling Rate to adjust from parent wood inventory.
+                  </p>
+                </div>
+                <span className={`text-sm px-2.5 py-1 rounded-full font-bold self-start sm:self-auto ${
+                  data.totalStockValuation < 0 ? "text-red-700 bg-red-100" : "text-blue-700 bg-blue-100"
+                }`}>
+                  Total Valuation: {data.totalStockValuation < 0 ? `-₹${Math.abs(data.totalStockValuation).toLocaleString("en-IN")}` : `₹${data.totalStockValuation.toLocaleString("en-IN")}`}
                 </span>
               </CardTitle>
             </CardHeader>
@@ -217,25 +228,52 @@ export default function BalanceSheetPage() {
                       <TableHead>Product / Material</TableHead>
                       <TableHead className="text-center">Unit</TableHead>
                       <TableHead className="text-right">Remaining Stock Qty</TableHead>
-                      <TableHead className="text-right">Avg Purchase Price</TableHead>
+                      <TableHead className="text-right">Avg Purchase Rate</TableHead>
+                      <TableHead className="text-right">Avg Selling Rate</TableHead>
+                      <TableHead className="text-right">Rate Used</TableHead>
                       <TableHead className="text-right">Total Valuation (₹)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.stockOnHandItems.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4 text-gray-500">No stock history recorded</TableCell>
+                        <TableCell colSpan={7} className="text-center py-4 text-gray-500">No stock history recorded</TableCell>
                       </TableRow>
                     ) : (
-                      data.stockOnHandItems.map((item: any, idx: number) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-semibold text-gray-900">{item.name}</TableCell>
-                          <TableCell className="text-center">{item.unit}</TableCell>
-                          <TableCell className="text-right">{item.remainingQty}</TableCell>
-                          <TableCell className="text-right">₹{item.avgCostPrice}</TableCell>
-                          <TableCell className="text-right font-bold text-blue-700">₹{item.totalValuation.toLocaleString("en-IN")}</TableCell>
-                        </TableRow>
-                      ))
+                      data.stockOnHandItems.map((item: any, idx: number) => {
+                        const isNegative = item.remainingQty < 0;
+                        const isValuationNegative = item.totalValuation < 0;
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell className="font-semibold text-gray-900">{item.name}</TableCell>
+                            <TableCell className="text-center">
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                                {item.unit}
+                              </span>
+                            </TableCell>
+                            <TableCell className={`text-right font-medium ${isNegative ? "text-amber-600" : "text-emerald-700"}`}>
+                              {item.remainingQty}
+                            </TableCell>
+                            <TableCell className="text-right text-gray-700">
+                              {item.avgCostPrice > 0 ? `₹${item.avgCostPrice.toLocaleString("en-IN")}` : "-"}
+                            </TableCell>
+                            <TableCell className="text-right text-gray-700">
+                              {item.avgSellingPrice > 0 ? `₹${item.avgSellingPrice.toLocaleString("en-IN")}` : "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-slate-800">
+                              {item.valuationRate > 0 ? `₹${item.valuationRate.toLocaleString("en-IN")}` : "₹0"}
+                              <span className="text-[10px] text-gray-400 block">
+                                {isNegative ? "(Selling)" : "(Cost)"}
+                              </span>
+                            </TableCell>
+                            <TableCell className={`text-right font-bold ${isValuationNegative ? "text-red-600" : "text-blue-700"}`}>
+                              {isValuationNegative
+                                ? `-₹${Math.abs(item.totalValuation).toLocaleString("en-IN")}`
+                                : `₹${item.totalValuation.toLocaleString("en-IN")}`}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>

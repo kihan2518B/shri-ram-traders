@@ -17,12 +17,11 @@ async function seed() {
   // 1. Create or fetch demo User
   let user = await prisma.user.findFirst({ where: { email: "demo@shriramtraders.com" } });
   if (!user) {
-    const hashedPassword = await bcrypt.hash("demo123", 10);
     user = await prisma.user.create({
       data: {
         email: "demo@shriramtraders.com",
         username: "demouser",
-        password: hashedPassword,
+        password: "demo123",
       },
     });
   }

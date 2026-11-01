@@ -23,6 +23,9 @@ export async function POST() {
       "expenses",
       "PaymentLog",
       "subscription",
+      "employee",
+      "attendance",
+      "salarySlip",
     ] as const;
 
     type ModelName = (typeof models)[number];

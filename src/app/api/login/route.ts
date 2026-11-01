@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       id: true,
     },
   });
-  console.log("loggedINUser:", loggedINUser);
+  console.log("loggedINUser:", loggedINUser, password);
   if (!loggedINUser || loggedINUser.password !== password) {
     return NextResponse.json(
       {
